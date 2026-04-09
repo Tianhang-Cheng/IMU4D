@@ -46,7 +46,7 @@ from torch.utils.data import DataLoader, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 
 from utils.metrics import compute_mpjpe
-from custom_path import obj_name_path, pretrained_showo_path, imu_data_path
+from dataset_process.custom_path import obj_name_path, pretrained_showo_path, imu_data_path
 
 SYSTEM_PROMPT_LEN = 28
 

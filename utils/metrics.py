@@ -34,8 +34,8 @@ def psnr(original, decoded, data_range=2.0):
 
 
 def orientation_error(
-    label_Ts: Float[Tensor],
-    pred_Ts: Float[Tensor],
+    label_Ts: Float[Tensor, "batch 7"],
+    pred_Ts: Float[Tensor, "batch 7"],
 ) -> np.ndarray:
     """Adapted from EgoAllo project"""
     matrix_errors = (
@@ -51,8 +51,8 @@ def orientation_error(
 
 
 def translation_error(
-    label_Ts: Float[Tensor],
-    pred_Ts: Float[Tensor],
+    label_Ts: Float[Tensor, "batch 7"],
+    pred_Ts: Float[Tensor, "batch 7"],
 ) -> np.ndarray:
     """Adapted from EgoAllo project"""
     errors = pred_Ts[:, 4:7] - label_Ts[:, 4:7]
@@ -65,10 +65,10 @@ def translation_error(
 
 
 def mpjpe_error(
-    label_T_world_root: Float[Tensor],
-    label_Ts_world_joint: Float[Tensor],
-    pred_T_world_root: Float[Tensor],
-    pred_Ts_world_joint: Float[Tensor],
+    label_T_world_root: Float[Tensor, "batch 7"],
+    label_Ts_world_joint: Float[Tensor, "batch 21 7"],
+    pred_T_world_root: Float[Tensor, "batch 7"],
+    pred_Ts_world_joint: Float[Tensor, "batch 21 7"],
     per_frame_procrustes_align: bool = False,
 ) -> np.ndarray:
     """Adapted from EgoAllo project"""

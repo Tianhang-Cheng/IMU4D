@@ -4,4 +4,5 @@
 /motion_metrics
 /imu4d.egg-info
 /wandb
+/dataset_process/SMPLX_NEUTRAL.npz
 *.safetensors

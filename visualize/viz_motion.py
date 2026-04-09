@@ -20,7 +20,7 @@ from smplx import SMPLX
 from utils.rotation2 import convert_rotation
 from utils.metrics import compute_mpjpe
 import matplotlib.pyplot as plt
-import custom_path as cp
+import dataset_process.custom_path as cp
 
 @dataclass(frozen=True)
 class ViewerConfig:

@@ -12,7 +12,7 @@ import glob
 import random
 from typing import Tuple
 from bisect import bisect_left, bisect_right
-from custom_path import humoto_root, parahome_root, imuposer_root, dipimu_root
+from dataset_process.custom_path import humoto_root, parahome_root, imuposer_root, dipimu_root
 
 def smooth_avg(acc, s=3):
     """
