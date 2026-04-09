@@ -1,0 +1,12 @@
+{
+  "_class_name": "Showo",
+  "_diffusers_version": "0.30.1",
+  "codebook_size": 8192,
+  "llm_model_path": "microsoft/phi-1_5",
+  "llm_vocab_size": 50295,
+  "load_from_showo": true,
+  "mask_token_id": 58497,
+  "num_vq_tokens": 1024,
+  "vocab_size": 58498,
+  "w_clip_vit": false
+}

@@ -1,0 +1,7 @@
+*__pycache__*
+*.zip
+/exp
+/motion_metrics
+/imu4d.egg-info
+/wandb
+*.safetensors

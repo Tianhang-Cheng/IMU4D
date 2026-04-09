@@ -1,0 +1,104 @@
+wandb:
+  entity: null
+#  run_id: askkz9i2
+  resume: 'auto'
+
+experiment:
+    project: "finetune_eccv"
+    name: "exp_train"
+    output_dir: "exp/exp_train"
+    ckpt_dir: "exp/exp_train"
+    max_train_examples_t2i: 20000000
+    max_train_examples_mmu: 40000000
+    save_every: 500
+    sample_every: 500
+    eval_every: 500
+    max_eval_sample_num: 50
+    max_eval_imu_len: 60
+
+    train_random_cut: True
+    min_train_imu_len: 40
+    max_train_imu_len: 120
+    
+    max_new_text_tokens: 60
+    max_object_id_tokens: 1
+    min_object_id_tokens: 1
+    
+    is_start_eval: True
+    is_start_sample: True
+    log_every: 5
+    log_grad_norm_every: 500
+    resume_from_checkpoint: True
+    load_without_optimizer: False
+    checkpoints_total_limit: 4
+    mode: "train"
+    train_selected_dataset: None
+    eval_selected_dataset: None
+    train_invalid_imu_id: "random"
+    eval_invalid_imu_id: []
+    save_test_sample: False # during testing, save the sample to the output directory
+
+model:
+    totem_folder: "motion_vqvae"
+    showo:
+        load_from_showo: False
+        pretrained_model_path: "pretrained_weight"
+        vocab_size: 58498
+        llm_vocab_size: 50295
+        llm_model_path: 'microsoft/phi-1_5'
+        codebook_size: 8192
+        bidirectional_imu: False
+        bidirectional_motion: True
+        base_model: "showo" # showo or gpt2-medium
+        add_gate: True
+        all_continuous_recon: False  # True: direct nn.Linear regression with L1 loss; False: discrete logits with cross-entropy
+        partial_continuous_recon: True
+
+    gradient_checkpointing: False
+    normalization_window_size: 4
+    accumulate: True # diff trajectory
+    accumulate_orient: True # diff orientation
+    accumulate_pose: False # diff pose
+    local_coordinate: False # not stable during training
+    overfit: False
+    motion_only: False
+    traj_only: False
+    text_only: False
+    large_totem_model: False
+    smooth_imu: False # not implemented
+    debug: False
+    dynamic_object: False
+    use_rope_embed: False  # True: RoPE time embedding; False: sinusoidal (default)
+
+dataset:
+    params:
+        num_workers: 1
+        pin_memory: True
+        persistent_workers: True
+        fps: 30
+
+optimizer:
+    name: adamw
+    params: # default adamw params
+        learning_rate: 1e-04
+        scale_lr: False # scale learning rate by total batch size
+        beta1: 0.9
+        beta2: 0.999
+        weight_decay: 0.01
+        epsilon: 1e-8
+
+lr_scheduler:
+    scheduler: "cosine"
+    params:
+        learning_rate: ${optimizer.params.learning_rate}
+        warmup_steps: 1000
+
+training:
+    gradient_accumulation_steps: 3
+    batch_size_imu: 32
+    mixed_precision: "bf16"
+    enable_tf32: True
+    seed: 42
+    max_train_steps: 50000000
+    max_grad_norm: 2.0
+    add_imu_noise: False

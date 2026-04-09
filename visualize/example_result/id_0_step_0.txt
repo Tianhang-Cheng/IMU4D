@@ -1,0 +1,14 @@
+sample_idx: ['LINGO_17505']
+invalid_imu_id_list: [3]
+input imu length: 60
+status_top1_acc: 37.0370%, status_top5_acc: 77.5309%, status_ce: 1.8884
+text_top1_acc: 0.0000%, text_top5_acc: 25.00%, text_ce: 13.9375
+mpjpe: 16.4353 mm
+pred_text: walk forward while holding wok in left hand
+gt_text: ['sit down on chair']
+object_id_accuracy: 100.0%
+object_rot_L1: 0.0650, object_transl_L1: 0.0725
+pred_objects:
+  ground: rot: [0.94140625, 0.00469970703125, 0.0272216796875, -0.0014801025390625, 0.99609375, -0.00037384033203125], transl: [0.005218505859375, -0.91015625, -0.003936767578125]
+gt_objects:
+  ground: rot: [1.0, 0.0, -0.00012482427700888366, 0.0, 1.0, 0.0], transl: [0.0, -0.9823311567306519, 0.0]

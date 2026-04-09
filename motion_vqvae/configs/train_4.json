@@ -1,0 +1,15 @@
+{
+    "vqvae_config": {
+        "model_name": "vqvae",
+        "model_save_name": "vqvae",
+        "learning_rate": 1e-3,
+        "block_hidden_size": 128,
+        "num_residual_layers": 2,
+        "res_hidden_size": 64,
+        "embedding_dim": 64,
+        "num_embeddings": 4096,
+        "commitment_cost": 0.25,
+        "compression_factor": 4,
+        "dataset": "imu"
+    }
+}
