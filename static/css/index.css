@@ -1,0 +1,314 @@
+body {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+
+.footer .icon-link {
+    font-size: 25px;
+    color: #000;
+}
+
+.link-block a {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.dnerf {
+  font-variant: small-caps;
+}
+
+
+.teaser .hero-body {
+  padding-top: 0;
+  padding-bottom: 3rem;
+}
+
+
+.button.is-dark {
+  color: white !important;
+  background-color: #363636 !important; /* Bulma's default dark button */
+  border-color: #363636 !important;
+}
+
+
+.button.is-dark:hover {
+  background-color: #272727 !important;
+  border-color: #272727 !important;
+  color: white !important;
+}
+
+
+.teaser {
+  font-family: 'Roboto', sans-serif;
+}
+
+
+.title-container {
+  max-width: 90vw;       /* takes up 90% of the viewport width */
+  margin: 0 auto;
+  text-align: center;
+  padding: 0 1rem;       /* add side padding so text doesn't touch edges */
+}
+
+
+.main-title {
+  font-size: clamp(1.5rem, 4vw, 3rem);  /* scales smoothly with screen size */
+  line-height: 1.2;
+  word-wrap: break-word;  /* prevents overflow on small screens */
+}
+
+
+.publication-title {
+}
+
+.publication-banner {
+  max-height: parent;
+
+}
+
+.publication-banner video {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  object-fit: fit;
+}
+
+.publication-header .hero-body {
+}
+
+.publication-title {
+    font-family: 'Roboto', sans-serif;
+}
+
+.publication-authors {
+  font-family: 'Roboto', sans-serif;
+}
+
+.section-title {
+    font-family: 'Roboto', sans-serif;
+}
+
+.publication-venue {
+    color: #555;
+    width: fit-content;
+    font-weight: bold;
+}
+
+.publication-awards {
+    color: #ff3860;
+    width: fit-content;
+    font-weight: bolder;
+}
+
+.publication-authors {
+}
+
+.publication-authors a {
+   color: hsl(35, 74%, 36%) !important;
+}
+
+.publication-authors a:hover {
+    text-decoration: underline;
+}
+
+.author-block {
+  display: inline-block;
+}
+
+.publication-banner img {
+}
+
+.publication-authors {
+  /*color: #4286f4;*/
+}
+
+.publication-video {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%;
+
+    overflow: hidden;
+    border-radius: 10px !important;
+}
+
+.publication-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.publication-body img {
+}
+
+.results-carousel {
+  overflow: hidden;
+}
+
+.results-carousel .item {
+  margin: 5px;
+  overflow: hidden;
+  border: 1px solid #bbb;
+  border-radius: 10px;
+  padding: 0;
+  font-size: 0;
+}
+
+.results-carousel video {
+  margin: 0;
+}
+
+
+.interpolation-panel {
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.interpolation-panel .interpolation-image {
+  width: 100%;
+  border-radius: 5px;
+}
+
+.interpolation-video-column {
+}
+
+.interpolation-panel .slider {
+  margin: 0 !important;
+}
+
+.interpolation-panel .slider {
+  margin: 0 !important;
+}
+
+#interpolation-image-wrapper {
+  width: 100%;
+}
+#interpolation-image-wrapper img {
+  border-radius: 5px;
+}
+
+/* ── Video Card System ── */
+.video-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+.video-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.13); }
+.video-card video { width: 100%; display: block; }
+.video-card-caption {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #333;
+}
+.video-card-caption .caption-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+.video-card-caption .caption-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-right: 0.35rem;
+}
+.video-card-caption .caption-sample {
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+  padding: 0.4rem 0;
+  display: block;
+}
+
+/* ── Section alternating background ── */
+.section-alt { background-color: #f8f8f8; }
+
+/* ── Color Legend Badge Row ── */
+.color-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin: 0.75rem 0 1.25rem 0;
+}
+.legend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: #444;
+  white-space: nowrap;
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot-white  { background: #cccccc; border: 1px solid #aaa; }
+.legend-dot-blue   { background: rgb(97, 208, 255); }
+.legend-dot-red    { background: rgb(255, 106, 129); }
+.legend-dot-green  { background: rgb(108, 215, 41); }
+.legend-dot-orange { background: orange; }
+
+/* ── Subsection header accents ── */
+.subsection-title {
+  margin-bottom: 1rem !important;
+}
+.dataset-title {
+  color: #444;
+  margin-bottom: 0.75rem !important;
+}
+
+/* ── Section note callout ── */
+.section-note {
+  background: #f0f5ff;
+  border-left: 4px solid #4a90d9;
+  border-radius: 0 6px 6px 0;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+.section-note-warm { background: #fff8f0; border-left-color: #e8a030; }
+
+/* ── Relocalization research question callout ── */
+.reloc-question {
+  font-size: 1.0rem;
+  font-style: italic;
+  color: #2c5fb0;
+  border-left: 4px solid #4a90d9;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  background: #f0f5ff;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.4;
+}
+
+/* ── Acknowledgements box ── */
+.acknowledgement-box {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #444;
+  max-width: 860px;
+  margin: 0 auto;
+}
