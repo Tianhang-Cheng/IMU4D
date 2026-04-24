@@ -6,3 +6,4 @@
 /wandb
 /dataset_process/SMPLX_NEUTRAL.npz
 *.safetensors
+/dataset_process/humoto_data

@@ -913,8 +913,8 @@ class IMUDataset():
         scene_only: bool = False, # whether to only use scene data
         random_cut: bool = False, # whether to randomly cut the sequence
         random_mask_text: bool = False, # whether to randomly mask the text
-        add_humoto_data: bool = True, # whether to add humoto data
-        add_motiongv_data: bool = True, # whether to add motiongv data
+        add_humoto_data: bool = False, # whether to add humoto data
+        add_motiongv_data: bool = False, # whether to add motiongv data # TODO: too noisy, harmful for training
         shift: int = 0, # whether to shift the imu data
         selected_dataset: Optional[str] = None, # whether to evaluate on the full dataset
         shuffle_list: bool = True, # whether to shuffle the data

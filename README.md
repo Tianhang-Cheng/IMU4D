@@ -1,10 +1,10 @@
 # Seeing Without Eyes: 4D Human-Scene Understanding from Wearable IMUs
 
 <p align="center">
-  <a href="https://arxiv.org/abs/XXXX.XXXXX" title="arXiv (replace ID when available)">
+  <a href="https://arxiv.org/abs/2604.21926" title="arXiv">
     <img src="https://img.shields.io/badge/arXiv-Paper-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv paper" />
   </a>
-  <a href="https://example.com" title="Project page (replace URL when available)">
+  <a href="https://tianhang-cheng.github.io/IMU4D/" title="Project page (replace URL when available)">
     <img src="https://img.shields.io/badge/Project-Page-4285F4?style=flat-square&logo=google-chrome&logoColor=white" alt="Project page" />
   </a>
 </p>
@@ -37,14 +37,22 @@ Run this from the repository root:
 pip install -e .
 ```
 
+## Data
+
+coming soon
+
 ## Inference
 
 ### IMU to SMPL-X Motion and Text Description
 
-### Step 1: Download checkpoints
+### Step 1: Download checkpoints and weights
 
-- Obtain pretrained **Generator** weights from project [Google Drive]() and put in `showo_imu/checkpoint-448000/unwapped_model`. **VQVAE** is already included in `motion_vqvae/pretrained_weight`.
-- Place them under the directory used as `experiment.ckpt_dir` (for example, `exp/exp_train`) with the layout expected by `run.py` when `experiment.resume_from_checkpoint=True`.
+- Obtain pretrained **Generator** weights from [Huggingface](https://huggingface.co/TianhangCheng7/IMU4d/tree/main). It will download base`showo_imu/checkpoint-446000/unwapped_model`. Other finetuned models are coming soon.
+
+```bash
+bash scripts/download_base_model.sh
+```
+- **VQVAE** is already included in `motion_vqvae/pretrained_weight`.
 - Download `SMPLX_NEUTRAL.npz` from [SMPL-X](https://smpl-x.is.tue.mpg.de/download.php), put in `dataset_process_root` (see `custom_path.py`).
 
 ### Step 2: Run test inference and save motion outputs
@@ -55,6 +63,7 @@ pip install -e .
 
 
 ```bash
+export CUDA_VISIBLE_DEVICES=2
 python run.py \
   config=configs/train.yaml \
   experiment.ckpt_dir=exp/exp_train \
