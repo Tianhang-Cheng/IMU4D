@@ -925,6 +925,7 @@ class IMUDataset():
         IMUSEQMAXLEN: int = 1e6, # cut max length to avoid OOM (out of memory) issues
         acc_scale: float = 1.0, # scale the acceleration data
         gyro_scale: float = 1.0, # scale the gyroscope data
+        selected_imu_seq: Optional[str] = None,  # absolute or cwd-relative path to one .pkl (eval)
         **kwargs,
     ):
         # self.root = '/scratch/benk/hhsu2/imu-humans/final_data_per_sequence' # hardcode for now
@@ -951,11 +952,24 @@ class IMUDataset():
         self.gyro_scale = gyro_scale
         self.cut_length = IMUSEQMAXLEN
         self.IMUSEQMAXLEN = IMUSEQMAXLEN
+        self.selected_imu_seq_path: Optional[str] = None
         assert not add_imu_noise, "add_imu_noise is not supported for full dataset."
         assert IMUSEQMAXLEN is not None
         
         assert self.root is not None, "Please specify the root directory of the dataset."
         assert split in ['train', 'val', 'test']
+
+        if selected_imu_seq is not None:
+            p = os.path.abspath(os.path.normpath(os.path.expanduser(selected_imu_seq)))
+            if not os.path.isfile(p):
+                raise FileNotFoundError(f"selected_imu_seq not found: {p}")
+            self.selected_dataset = selected_dataset
+            self.selected_imu_seq_path = p
+            self.data = [0]
+            self.rest_pelvis = np.array([ 0.00312326, -0.35140744,  0.01203655], dtype=np.float32)
+            self.return_path_only = return_path_only
+            print(f"IMU dataset loaded. Single sequence file: {self.selected_imu_seq_path} (1 sample)")
+            return
 
         if split != 'train':
             assert not random_cut, "only do random cut for train split."
@@ -1091,12 +1105,20 @@ class IMUDataset():
     
     def __getitem__(self, idx):
 
-        sample_idx = self.data[idx]
         if self.random_cut:
             assert self.cut_length is not None, "cut_length must be set when random_cut is True"
 
+        sample_idx = self.data[idx]
+        if self.selected_imu_seq_path is not None:
+            assert idx == 0, "Single-sequence dataset has exactly one item."
+            sample_path = self.selected_imu_seq_path
+            data_source = 'other_dataset'
+            add_ground_data = True
+            with open(sample_path, 'rb') as f:
+                sample = pickle.load(f)
+            sample_idx = os.path.splitext(os.path.basename(sample_path))[0]
         # try:
-        if isinstance(sample_idx, str) and 'humoto' in sample_idx:
+        elif isinstance(sample_idx, str) and 'humoto' in sample_idx:
             # load from humoto path
             data_source = 'humoto'
             sample_idx = int(sample_idx.split('_')[1])
@@ -1191,6 +1213,8 @@ class IMUDataset():
                 sample = pickle.load(f)
  
 
+        filter_short_text = (self.selected_dataset is None) and (self.selected_imu_seq_path is None)
+
         if data_source == 'imuposer':
             assert not self.motion_only
             assert not self.scene_only
@@ -1199,7 +1223,7 @@ class IMUDataset():
             sample_output = process_imuposer_data(sample, self.random_cut, self.random_mask_text, 
                                                 self.cut_length, shift=self.shift, 
                                                 add_ground_data=add_ground_data,
-                                                filter_short_text=(self.selected_dataset is None),
+                                                filter_short_text=filter_short_text,
                                                 data_source=data_source, 
                                                 dynamic_object=self.dynamic_object,
                                                 fps=self.fps, 
@@ -1215,7 +1239,7 @@ class IMUDataset():
             sample_output = process_dipimu_data(sample, self.random_cut, self.random_mask_text, 
                                                 self.cut_length, shift=self.shift, 
                                                 add_ground_data=add_ground_data,
-                                                filter_short_text=(self.selected_dataset is None),
+                                                filter_short_text=filter_short_text,
                                                 data_source=data_source, 
                                                 dynamic_object=self.dynamic_object,
                                                 fps=self.fps,
@@ -1229,7 +1253,7 @@ class IMUDataset():
             sample_output = process_imu_data(sample, self.random_cut, self.random_mask_text, 
                                             self.cut_length, shift=self.shift, 
                                             add_ground_data=add_ground_data,
-                                            filter_short_text=(self.selected_dataset is None),
+                                            filter_short_text=filter_short_text,
                                             motion_only=self.motion_only,
                                             scene_only=self.scene_only,
                                             data_source=data_source, 
@@ -1242,7 +1266,10 @@ class IMUDataset():
                                             gyro_scale=self.gyro_scale)
         
         if sample_output is None:
-            # not meeting the minimum length requirement
+            if self.selected_imu_seq_path is not None:
+                raise RuntimeError(
+                    f"process_imu_data returned None (e.g. too short) for {self.selected_imu_seq_path}"
+                )
             return self.__getitem__((idx + 1) % len(self))
 
         sample_output['sample_idx'] = sample_idx

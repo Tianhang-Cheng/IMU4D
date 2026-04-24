@@ -720,6 +720,9 @@ def main():
     mode = config.experiment.mode # train or test
     train_selected_dataset = config.experiment.train_selected_dataset # HUMOTO, LINGO, ParaHome, humanml, None
     eval_selected_dataset = config.experiment.eval_selected_dataset # HUMOTO, LINGO, ParaHome, humanml, None
+    eval_selected_imu_seq = config.experiment.get("eval_selected_imu_seq", None)
+    if eval_selected_imu_seq in (None, "", "None"):
+        eval_selected_imu_seq = None
 
     # import pdb; pdb.set_trace()
 
@@ -732,6 +735,11 @@ def main():
     if eval_selected_dataset is not None:
         assert eval_selected_dataset in ["HUMOTO", "LINGO", "ParaHome", 'humanml', 'imuposer', 'dipimu']
     assert mode in ["train", "test"], "Mode must be train or test"
+    if mode == "test":
+        assert eval_selected_dataset is not None or eval_selected_imu_seq is not None, (
+            "test mode requires experiment.eval_selected_dataset and/or experiment.eval_selected_imu_seq"
+        )
+    assert eval_selected_imu_seq is None or mode == "test", "eval_selected_imu_seq is only valid for mode=test"
 
     # Enable TF32 on Ampere GPUs
     if config.training.enable_tf32:
@@ -1159,6 +1167,7 @@ def main():
     train_dataset_imu = def_dataset(
         split="train",
         selected_dataset=train_selected_dataset,
+        selected_imu_seq=eval_selected_imu_seq,
         random_cut=train_random_cut,
         random_mask_text=False,
         add_imu_noise=config.training.add_imu_noise,
@@ -1194,6 +1203,7 @@ def main():
         val_dataset_imu = def_dataset(
             split="val",
             selected_dataset=eval_selected_dataset,
+            selected_imu_seq=eval_selected_imu_seq,
             random_mask_text=False,
             shuffle_list=True,
             add_imu_noise=False,
@@ -1377,7 +1387,7 @@ def main():
 
         # assert 1 GPU
         assert accelerator.num_processes == 1, "Testing on full dataset requires 1 GPU"
-        shift_values = [0, 2]
+        shift_values = [0] if eval_selected_imu_seq is not None else [0, 2]
         
         start_time = time.time()
         for shift_value in shift_values:
@@ -1385,6 +1395,7 @@ def main():
             test_dataset_imu = def_dataset(
                 split="test",
                 selected_dataset=eval_selected_dataset,
+                selected_imu_seq=eval_selected_imu_seq,
                 shift=shift_value,
                 shuffle_list=False,
                 random_cut=False,
@@ -1401,7 +1412,13 @@ def main():
                 shuffle=False,
                 num_workers=dataset_config.num_workers
             )
-            print(f"Evaluating on {eval_selected_dataset} dataset with {len(test_dataset_imu)} samples and shifted {shift_value} frames")
+            if eval_selected_imu_seq is not None:
+                print(
+                    f"Evaluating single IMU sequence {eval_selected_imu_seq} "
+                    f"({len(test_dataset_imu)} sample(s)), shift={shift_value} frames"
+                )
+            else:
+                print(f"Evaluating on {eval_selected_dataset} dataset with {len(test_dataset_imu)} samples and shifted {shift_value} frames")
 
             eval_model_func(
                 model=accelerator.unwrap_model(model),
@@ -1417,7 +1434,7 @@ def main():
             ) 
         print(f"Evaluation done in {time.time() - start_time} seconds.")
         # copy the loaded checkpoint to the same dir as saved samples (output_dir)
-        if config.experiment.resume_from_checkpoint:
+        if config.experiment.save_ckpt_when_eval:
             ckpt_dirs = os.listdir(config.experiment.ckpt_dir)
             ckpt_dirs = [d for d in ckpt_dirs if d.startswith("checkpoint")]
             ckpt_dirs = sorted(ckpt_dirs, key=lambda x: int(x.split("-")[1]))

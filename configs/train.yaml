@@ -34,9 +34,11 @@ experiment:
     mode: "train"
     train_selected_dataset: None
     eval_selected_dataset: None
+    eval_selected_imu_seq: null  # path to one .pkl; if set, test mode evaluates only this file
     train_invalid_imu_id: "random"
     eval_invalid_imu_id: []
     save_test_sample: False # during testing, save the sample to the output directory
+    save_ckpt_when_eval: False # during testing, save the checkpoint to the output directory
 
 model:
     totem_folder: "motion_vqvae"

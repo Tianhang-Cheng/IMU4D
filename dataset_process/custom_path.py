@@ -18,7 +18,8 @@ imuposer_root = f'{dataset_process_root}/imuposer_dataset_processed'
 dipimu_root = f'{dataset_process_root}/DIP_IMU_processed'
 
 # general imu dataset
-imu_data_path = '/shared/perception/datasets/imu_data/final_data_per_sequence'
+# imu_data_path = '/shared/perception/datasets/imu_data/final_data_per_sequence'
+imu_data_path = '' # FIXME: coming soon
 
 # pretrained weights for showo
 pretrained_showo_path = f'pretrained_weight/showo'

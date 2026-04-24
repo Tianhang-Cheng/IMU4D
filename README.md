@@ -37,33 +37,28 @@ Run this from the repository root:
 pip install -e .
 ```
 
-## Data
+## Checkpoints and Weights
 
-coming soon
-
-## Inference
-
-### IMU to SMPL-X Motion and Text Description
-
-### Step 1: Download checkpoints and weights
-
-- Obtain pretrained **Generator** weights from [Huggingface](https://huggingface.co/TianhangCheng7/IMU4d/tree/main). It will download base`showo_imu/checkpoint-446000/unwapped_model`. Other finetuned models are coming soon.
+- Obtain pretrained **Generator** weights using following commands. It will download base`showo_imu/checkpoint-446000/unwapped_model`. Other finetuned models are coming soon.
 
 ```bash
 bash scripts/download_base_model.sh
 ```
 - **VQVAE** is already included in `motion_vqvae/pretrained_weight`.
-- Download `SMPLX_NEUTRAL.npz` from [SMPL-X](https://smpl-x.is.tue.mpg.de/download.php), put in `dataset_process_root` (see `custom_path.py`).
+- **SMPLX** model requires downloading `SMPLX_NEUTRAL.npz` from [SMPL-X](https://smpl-x.is.tue.mpg.de/download.php), put in `dataset_process_root`. Or modify `dataset_process/custom_path.py` to set the path.
 
-### Step 2: Run test inference and save motion outputs
+## Datasets
 
-- Run `run.py` with `experiment.mode=test` from the repository root.
-- This loads weights from `experiment.ckpt_dir`, evaluates on `experiment.eval_selected_dataset`, and writes outputs to `experiment.output_dir`.
-- Set `experiment.save_test_sample=True` if you need per-sample `*.npy` predictions for metric evaluation in step 3.
+Coming soon.
 
+## Inference
+
+### IMU to SMPL-X Motion and Text Description
+
+(1) Evaluate on selected dataset (the data is coming soon)
 
 ```bash
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 python run.py \
   config=configs/train.yaml \
   experiment.ckpt_dir=exp/exp_train \
@@ -78,6 +73,35 @@ python run.py \
   experiment.save_test_sample=True
 ```
 
+(2) Evaluate on select single IMU input
+
+```bash
+export CUDA_VISIBLE_DEVICES=0
+python run.py \
+  config=configs/train.yaml \
+  experiment.ckpt_dir=exp/exp_train \
+  experiment.eval_selected_imu_seq=dataset_process/sample_data/LINGO_17992.pkl \
+  experiment.mode=test \
+  experiment.name=exp_test_lingo_5pt \
+  experiment.output_dir=exp/test_sample_data_5pt \
+  experiment.resume_from_checkpoint=True \
+  experiment.strict_resume=True \
+  experiment.max_eval_imu_len=60 \
+  experiment.eval_invalid_imu_id=[3] \
+  experiment.save_test_sample=True
+```
+
+result will be like:
+
+```text
+Saved sample 0 at step 0
+Saved metrics to exp/test_sample_data_5pt/viz_test_generate_number_shifted_0/id_0_step_0.txt
+mean_traj_error: 0.0095, mean_orient_error: 0.0344, mean_pose_error: 0.0527
+mean_status_top1_acc: 29.63%, mean_status_top5_acc: 70.12%, mean_status_ce: 2.2361
+mean_text_top1_acc: 0.00%, mean_text_top5_acc: 14.29%, mean_text_ce: 11.3125
+mean_mpjpe: 26.67 mm
+```
+
 <details>
 <summary>Inference options (click to expand)</summary>
 
@@ -85,6 +109,7 @@ python run.py \
 |--------|------|
 | `experiment.ckpt_dir` | Folder containing checkpoints to load when resuming. |
 | `experiment.eval_selected_dataset` | Benchmark split / dataset name (for example `LINGO`). |
+| `experiment.eval_selected_imu_seq` | Path to a single `.pkl` (same format as split samples). If set, evaluation runs on this file only (optional `eval_selected_dataset` for label handling). |
 | `experiment.mode=test` | Test/evaluation pass (no training). |
 | `experiment.name` | Run name for logging and metadata. |
 | `experiment.output_dir` | Logs, metrics, and saved test artifacts. |
