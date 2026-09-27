@@ -4,10 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="description"
-    content="Seeing Without Eyes: 4D Human-Scene Understanding from Wearable IMUs.">
-  <meta name="keywords" content="IMU, human motion, scene understanding, 4D reconstruction">
+    content="IMU4D: 4D Human-Object Understanding from Wearable IMUs.">
+  <meta name="keywords" content="IMU, human motion, human-object interaction, 4D reconstruction">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Seeing Without Eyes: 4D Human–Scene Understanding from Wearable IMUs</title>
+  <title>IMU4D: 4D Human-Object Understanding from Wearable IMUs</title>
 
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&subset=latin-ext" rel="stylesheet">
@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/model-comparison.css?v=20260925m">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script defer src="./static/js/fontawesome.all.min.js"></script>
@@ -46,46 +47,15 @@
       <div class="container is-max-widescreen">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <h1 class="title is-1 publication-title">Seeing Without Eyes: 4D Human–Scene Understanding from Wearable IMUs</h1>
+            <h1 class="title is-1 publication-title">IMU4D: 4D Human-Object Understanding from Wearable IMUs</h1>
             <div class="is-size-5 publication-authors">
-              <span class="author-block"><a target="_blank" href="https://haoyuhsu.github.io/">Hao-Yu Hsu</a><sup>*</sup></span>&nbsp;&nbsp;
-              <span class="author-block"><a target="_blank" href="https://tianhang-cheng.github.io/">Tianhang Cheng</a><sup>*</sup></span>&nbsp;&nbsp;
-              <span class="author-block"><a target="_blank" href="https://wenj.github.io/">Jing Wen</a></span>&nbsp;&nbsp;
-              <span class="author-block"><a target="_blank" href="https://www.alexander-schwing.de/">Alexander G. Schwing</a></span>&nbsp;&nbsp;
-              <span class="author-block"><a target="_blank" href="https://shenlong.web.illinois.edu/">Shenlong Wang</a></span>
+              <span class="author-block">Anonymous Authors</span>
             </div>
             <h3 style="text-align: center; font-size: 100%; color: #2d2e2e; margin-top: 0.5rem;">
-              University of Illinois at Urbana-Champaign<br>
-              <sup>*</sup> indicates equal contribution
             </h3>
             <div class="column has-text-centered">
               <div class="is-size-5 publication-authors">
-                <span class="author-block"><b>ArXiv 2026</b></span>
-              </div>
-            </div>
-            <div class="column has-text-centered">
-              <div class="publication-links">
-                <span class="link-block">
-                  <a href="static/pdf/IMU4D_arxiv.pdf"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
-                    <span>Paper</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a href="https://arxiv.org/abs/2604.21926"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="ai ai-arxiv"></i></span>
-                    <span>arXiv</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a href="https://github.com/Tianhang-Cheng/IMU4D"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fab fa-github"></i></span>
-                    <span>Code</span>
-                  </a>
-                </span>
+                <span class="author-block"><b>Under Review</b></span>
               </div>
             </div>
           </div>
@@ -97,376 +67,694 @@
   <section class="hero teaser">
     <div class="container is-max-widescreen">
       <div class="hero-body">
-        <div class="columns is-vcentered is-centered">
-          <img src="./static/images/teasor.png" alt="Teaser image">
-        </div>
+        <img src="./static/images/new_teasor.png" alt="IMU4D teaser: IMU time series from earbuds, watch and smartphone are turned into 4D human-object recovery (SMPL-X motion, text description, 3D objects)" style="width: 100%; height: auto; display: block; margin: 0 auto 1.5rem;">
         <h2 class="subtitle has-text-centered">
-          We propose <strong>IMU-to-4D</strong>, a large foundation model that jointly reasons over <strong>human motion</strong>, 
-        <strong>activity descriptions</strong>, and <strong>3D scene layouts</strong> purely from <strong>wearable IMU signals</strong>.
+          We propose <strong>IMU4D</strong>, a unified multimodal model that jointly predicts <strong>human motion</strong>, 
+        <strong>activity descriptions</strong>, and the <strong>3D objects the person interacts with</strong> purely from <strong>wearable IMU signals</strong>.
         </h2>
       </div>
     </div>
   </section>
 
-  <section class="hero is-light is-small">
-    <div class="hero-body">
-      <div class="container is-max-widescreen">
-        <div class="columns is-centered has-text-centered">
-          <div class="column is-full-width">
-            <h2 class="title is-3 section-title">Abstract</h2>
-            <div class="content has-text-justified">
-              <p>
-                Understanding human activities and their surrounding environments typically relies on visual perception, 
-                yet cameras pose persistent challenges in privacy, safety, energy efficiency, and scalability. We explore 
-                an alternative: 4D perception without vision. Its goal is to reconstruct human motion and 3D scene layouts 
-                purely from everyday wearable sensors. For this we introduce IMU-to-4D, a framework that repurposes 
-                large language models for non-visual spatiotemporal understanding of human-scene dynamics. IMU-to-4D uses 
-                data from a few inertial sensors from earbuds, watches, or smartphones and predicts detailed 4D human motion 
-                together with coarse scene structure. Experiments across diverse human-scene datasets show that IMU-to-4D 
-                yields more coherent and temporally stable results than SoTA cascaded pipelines, suggesting wearable 
-                motion sensors alone can support rich 4D understanding.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <section class="section">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-full-width">
-          <h2 class="title is-3 section-title">Method Overview</h2>
-          <img src="./static/images/method.png" alt="Method Overview" style="width: 100%; max-width: 1000px;">
-          <p class="has-text-justified" style="margin-top: 1rem; max-width: 1000px; margin-left: auto; margin-right: auto;">
-            <strong>(Left) Motion Tokenizer.</strong> The root trajectory is chunked into fixed-length windows and normalized, where normalized chunks 
-            are VQ-quantized and normalization parameters &mu; and &sigma; are separately quantized via non-uniform binning, together yielding compact 
-            discrete root tokens. Body poses are continuously encoded via an MLP to produce body tokens. <strong>(Right) Multi-modal Transformer.</strong> 
-            Inertial signals from earbuds, smartphone, and watch are encoded and fed into a unified transformer, which jointly decodes human motion via 
-            bidirectional attention, and motion descriptions and scene layout autoregressively via causal attention.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ══════════════════════════════════════════════════════
-       QUALITATIVE COMPARISON
+       REAL-WORLD IMU → MOTION / Text
        ══════════════════════════════════════════════════════ -->
   <section class="section">
     <div class="container is-max-widescreen">
 
-      <h2 class="title is-3 section-title has-text-centered">Qualitative Comparison</h2>
-
-      <div class="section-note">
-        We compare our method against the baseline across three evaluation tracks.
-        The baseline is a modular pipeline include <strong>MobilePoser</strong> (IMU &rarr; motion), 
-        <strong>MotionGPT3</strong> (motion &rarr; text), and <strong>Summon</strong> (motion &rarr; scene).
-        All visualizations are performed on the held-out test sets.
-      </div>
+      <h2 class="title is-3 section-title has-text-centered">Real-world IMU &rarr; Motion / Text</h2>
 
       <hr>
 
-      <!-- ── A: Real-World IMU Dataset ── -->
-      <h3 class="title is-4 subsection-title">
-        IMU &rarr; Motion &nbsp;<span style="font-weight:400; color:#666;">(Real-World IMU Dataset)</span>
-      </h3>
+      <template id="mc-sample-template">
+        <article class="mc-card">
+          <div class="mc-stage">
+            <video class="mc-composite-video" muted playsinline preload="none"></video>
+            <button class="mc-nav mc-nav-prev" type="button" aria-label="Previous sample">&lsaquo;</button>
+            <button class="mc-nav mc-nav-next" type="button" aria-label="Next sample">&rsaquo;</button>
+          </div>
+          <div class="mc-text-results" aria-label="Text results"></div>
+          <div class="mc-controls">
+            <button class="mc-play" type="button">Play</button>
+            <input class="mc-timeline" type="range" min="0" max="1000" value="0" aria-label="Video timeline">
+            <span class="mc-clock">0:00 / 0:00</span>
+            <select class="mc-speed" aria-label="Playback speed">
+              <option value="0.5">0.5&times;</option>
+              <option value="1" selected>1&times;</option>
+              <option value="1.5">1.5&times;</option>
+              <option value="2">2&times;</option>
+            </select>
+          </div>
+        </article>
+      </template>
 
-      <div class="color-legend">
-        <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-green"></span> Ours</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-red"></span> MobilePoser</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-orange"></span> IMUPoser</span>
+      <div class="mc-root" id="realworld-comparison" data-manifest="REALWORLD_MANIFEST,COMPARISON_MANIFEST"
+           data-datasets="ncsa_meeting_room,ncsa_meeting_room_scene3,ncsa_v3,dipimu,imuposer"
+           data-dataset-names='{"ncsa_meeting_room": "Meeting Room (3pt, 1 AirPod + smartphone + smartwatch)", "ncsa_meeting_room_scene3": "Meeting Room (2pt, smartwatch + smartphone)", "ncsa_v3": "Apartment (3pt, 1 AirPod + smartphone + smartwatch)", "dipimu": "DIP-IMU (3pt, head + left wrist + right thigh)", "imuposer": "IMUPoser (3pt, head + left wrist + right pocket)"}'
+           data-sample-picks='{"ncsa_meeting_room": [3, 5, 11], "ncsa_meeting_room_scene3": [1, 5, 6], "ncsa_v3": [7, 15, 17], "dipimu": [1, 3, 9, 5, 18], "imuposer": [1, 2, 5, 9, 19]}'>
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              All inputs in this section are <strong>real-world IMU captures</strong>.
+              Meeting Room and Apartment GT captions are annotated from the RGB videos with Qwen3-VL and condensed to one short sentence.
+            </p>
+          </div>
+        </div>
+
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
+        </div>
+
+        <div class="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
+        </div>
+        <div class="mc-static-fallback">
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_01_b_frames-000480-000960-82edaa0b/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_01_b_frames-000480-000960-82edaa0b/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_04_frames-000000-000480-7499f7b1/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_04_frames-000000-000480-7499f7b1/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_04_a_frames-000000-000427-1461a121/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_04_a_frames-000000-000427-1461a121/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000000-000480-f599ff7d/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000000-000480-f599ff7d/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_04_c_frames-000480-000960-b1b26f39/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_04_c_frames-000480-000960-b1b26f39/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_05_frames-000480-000960-974b9caa/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_05_frames-000480-000960-974b9caa/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_02_frames-001440-001804-fb0b502f/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_02_frames-001440-001804-fb0b502f/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_04_b_frames-000000-000480-da8ce5c4/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_04_b_frames-000000-000480-da8ce5c4/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_03_a_frames-000960-001440-64a1d8f2/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_03_a_frames-000960-001440-64a1d8f2/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_03_b_frames-001440-001870-7d2d7b6d/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_03_b_frames-001440-001870-7d2d7b6d/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_05_frames-000000-000480-dbec0bcc/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_05_frames-000000-000480-dbec0bcc/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_01_a_frames-001920-002373-7be1b4d0/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_01_a_frames-001920-002373-7be1b4d0/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_01_b_frames-000000-000480-666d031e/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_01_b_frames-000000-000480-666d031e/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000480-000960-e5a5a34c/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000480-000960-e5a5a34c/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_03_a_frames-000480-000960-620ba7cd/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_03_a_frames-000480-000960-620ba7cd/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_03_b_frames-000000-000480-aa5a697a/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_03_b_frames-000000-000480-aa5a697a/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_01_b_frames-000480-000960-051fc665/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_01_b_frames-000480-000960-051fc665/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_05_frames-001440-001920-21d76c15/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_05_frames-001440-001920-21d76c15/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_10_01_b_frames-000000-000480-5b94530b/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_10_01_b_frames-000000-000480-5b94530b/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>DIP-IMU (3pt, head + left wrist + right thigh)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000960-001440-6a9d15b2/poster.jpg">
+              <source src="./static/videos/model_comparison/dipimu/dipimu_s_09_03_a_frames-000960-001440-6a9d15b2/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_1_ArmRaises_frames-000000-000480-27adbaab/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_1_ArmRaises_frames-000000-000480-27adbaab/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_13_Joogging_frames-000480-000960-4f628ab4/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_13_Joogging_frames-000480-000960-4f628ab4/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_15_Jogging_frames-000000-000480-26190d87/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_15_Jogging_frames-000000-000480-26190d87/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_5_Walking_frames-000480-000960-6875b3db/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_5_Walking_frames-000480-000960-6875b3db/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_9_Pushups_frames-000000-000335-e6800b09/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_9_Pushups_frames-000000-000335-e6800b09/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_14_Sitting_frames-000000-000480-1be1c838/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_14_Sitting_frames-000000-000480-1be1c838/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_4_LowerBody_frames-000000-000480-10162d49/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_4_LowerBody_frames-000000-000480-10162d49/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_13_Joogging_frames-000000-000480-8afd73cd/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_13_Joogging_frames-000000-000480-8afd73cd/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_17_JumpingJacks_frames-000000-000398-e591d2f0/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_17_JumpingJacks_frames-000000-000398-e591d2f0/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_5_Walking_frames-000960-001440-a3b38a1b/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_5_Walking_frames-000960-001440-a3b38a1b/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_16_sitting_frames-000000-000439-98e3260b/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_16_sitting_frames-000000-000439-98e3260b/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_4_LowerBody_frames-000480-000960-9ba71c03/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_4_LowerBody_frames-000480-000960-9ba71c03/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_7_Punching_frames-000000-000370-83d8adcd/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_7_Punching_frames-000000-000370-83d8adcd/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-000480-000960-0cd35fc5/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-000480-000960-0cd35fc5/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_15_JumpingJacks_frames-000000-000421-3130c4ad/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_15_JumpingJacks_frames-000000-000421-3130c4ad/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-000960-001440-7bc04f24/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-000960-001440-7bc04f24/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-001920-002400-d0957723/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_5_Walking_frames-001920-002400-d0957723/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_4_LowerBody_frames-000480-000960-6ab915af/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_4_LowerBody_frames-000480-000960-6ab915af/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P9_6_TennisSwings_frames-000000-000455-1ac89705/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P9_6_TennisSwings_frames-000000-000455-1ac89705/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>IMUPoser (3pt, head + left wrist + right pocket)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/imuposer/imuposer_P10_15_Jogging_frames-000480-000819-16102252/poster.jpg">
+              <source src="./static/videos/model_comparison/imuposer/imuposer_P10_15_Jogging_frames-000480-000819-16102252/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+        </div>
+        <div class="mc-samples"></div>
       </div>
 
-      <div class="section-note section-note-warm">
-        We follow prior works to first train on synthetic IMU data, then fine-tune on real-world IMU readings 
-        to adapt to real-world sensor noise.
-      </div>
+    </div>
+  </section>
 
-      <h4 class="title is-5 dataset-title">DIP-IMU Dataset</h4>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/dip_imu_dataset_0.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 0</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/dip_imu_dataset_10.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 1</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/dip_imu_dataset_18.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 2</span></div>
-        </div>
-      </div>
 
-      <h4 class="title is-5 dataset-title">IMUPoser Dataset</h4>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/imuposer_dataset_0.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 3</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/imuposer_dataset_7.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 4</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/video_baseline/imuposer_dataset_14.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 5</span></div>
-        </div>
-      </div>
+  <!-- ══════════════════════════════════════════════════════
+       SYNTHETIC IMU → MOTION / TEXT
+       ══════════════════════════════════════════════════════ -->
+  <section class="section section-alt">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Synthetic IMU &rarr; Motion / Text</h2>
 
       <hr>
 
-      <!-- ── B: HumanML ── -->
-      <h3 class="title is-4 subsection-title">
-        IMU &rarr; Motion &amp; Text &nbsp;<span style="font-weight:400; color:#666;">(HumanML Dataset)</span>
-      </h3>
+      <div class="mc-root" id="model-comparison" data-datasets="humanml"
+           data-dataset-names='{"humanml": "HumanML3D (5pt, head + both wrists + both pockets)"}'
+           data-sample-picks='{"humanml": [3, 4, 6, 8, 12]}'>
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              The IMU signals in this section are <strong>synthesized from motion sequences</strong>.
+            </p>
+          </div>
+        </div>
 
-      <div class="color-legend">
-        <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth (Motion)</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours (Motion)</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-red"></span> MobilePoser (Motion)</span>
-        <span class="legend-badge" style="background:#eefbe6; border-color:#b2e48a;">
-          <span class="legend-dot legend-dot-green"></span>
-          <span style="color:#3a7e0a;">Ground Truth (Text)</span>
-        </span>
-        <span class="legend-badge" style="background:#e8f6ff; border-color:#9fd4f5;">
-          <span class="legend-dot legend-dot-blue"></span>
-          <span style="color:#0a5a8a;">Ours (Text)</span>
-        </span>
-        <span class="legend-badge" style="background:#fff0f2; border-color:#f5b0ba;">
-          <span class="legend-dot legend-dot-red"></span>
-          <span style="color:#8a0a1a;">MotionGPT3 (Text)</span>
-        </span>
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" id="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
+        </div>
+
+        <div class="mc-loading" id="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
+        </div>
+        <div class="mc-static-fallback" id="mc-static-fallback">
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M010351_0-51c60c2e/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M010351_0-51c60c2e/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M003418_2-a27ae4aa/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M003418_2-a27ae4aa/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_001282_0-5de2f909/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_001282_0-5de2f909/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M008022_1-227cc3cd/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M008022_1-227cc3cd/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_000044_2-8b1d0491/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_000044_2-8b1d0491/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_012973_2-24470f3c/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_012973_2-24470f3c/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M009548_1-d92720a2/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M009548_1-d92720a2/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M012716_2-704b3e5b/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M012716_2-704b3e5b/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M003572_1-2014809e/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M003572_1-2014809e/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M004739_0-fdf4630f/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M004739_0-fdf4630f/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M014267_1-80e11537/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M014267_1-80e11537/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_011212_1-f3b9b838/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_011212_1-f3b9b838/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M007189_0-e003147e/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M007189_0-e003147e/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_007844_2-d08d6b53/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_007844_2-d08d6b53/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M004974_2-6e120634/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M004974_2-6e120634/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_004774_0-2751b2aa/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_004774_0-2751b2aa/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_007067_0-fde1c1b2/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_007067_0-fde1c1b2/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_M009300_1-0aa311a5/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_M009300_1-0aa311a5/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_012054_1-5fe618e8/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_012054_1-5fe618e8/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+          <article class="mc-static-card">
+            <div class="mc-static-title"><strong>HumanML3D (5pt, head + both wrists + both pockets)</strong></div>
+            <video controls muted loop playsinline preload="none" data-poster="./static/videos/model_comparison/humanml/MotionUnion_humanml_006433_2-801bde9a/poster.jpg">
+              <source src="./static/videos/model_comparison/humanml/MotionUnion_humanml_006433_2-801bde9a/comparison.mp4" type="video/mp4">
+            </video>
+          </article>
+        </div>
+        <div class="mc-samples" id="mc-samples"></div>
       </div>
 
-      <p class="has-text-grey" style="font-size:0.875rem; margin-bottom: 1.25rem;">
-        Starting locations of our prediction and MobilePoser are shifted slightly for clarity.
-        MotionGPT3 takes MobilePoser motion predictions as input.
-      </p>
+    </div>
+  </section>
 
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/15.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person jumps to the right, then to the left.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>He jumps to the left a short distance.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person jumps in place.</div>
-            </div>
-          </div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/24.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>Someone walks and jumps in a chaotic manner before kicking the ground.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>A person hops around, alternating between different spots.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person walks forward then turns around and walks back.</div>
-            </div>
-          </div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/700.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person performs various stretches by bending knees and moving from side to side, then by pulling the right elbow back with the left arm.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>A person starts with his arms apart, brings them together, and then moves right to left, and completes with a left-handed swing technique.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person leans forward and then looks back to the left.</div>
-            </div>
-          </div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/749.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person quickly crawls backwards on their front side using both hands and legs.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>They are crawling backward on the room's surface.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person is crawling forward and moving his legs straight and forward.</div>
-            </div>
-          </div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/761.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>They move their arms in a rhythmic up-and-down pattern.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The person is doing upper body exercises with their arms.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person stands still and then releases their right hand.</div>
-            </div>
-          </div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humanml/4552.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person executes a backhand shot in tennis.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The person takes a mock shot or two uneven hand movements.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person is stooping to the right then turns his left and walks backwards.</div>
-            </div>
-          </div>
-        </div>
-      </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SYNTHETIC IMU → MOTION / TEXT / OBJECT
+       ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Synthetic IMU &rarr; Motion / Text / Object</h2>
 
       <hr>
 
-      <!-- ── C: HUMOTO ── -->
-      <h3 class="title is-4 subsection-title">
-        IMU &rarr; Motion &amp; Text &amp; Scene &nbsp;<span style="font-weight:400; color:#666;">(HUMOTO Dataset)</span>
-      </h3>
+      <div class="mc-root" id="scene-comparison" data-manifest="SCENE_MANIFEST" data-datasets="humoto,hiphi,omomo"
+           data-dataset-names='{"humoto": "HUMOTO (static objects, 5pt, head + both wrists + both pockets)", "hiphi": "HiPHI (dynamic objects, 5pt, head + both wrists + both pockets)", "omomo": "OMOMO (dynamic objects, 5pt, head + both wrists + both pockets)"}'
+           data-sample-picks='{"humoto": [2, 4, 9, 14, 15], "hiphi": [13, 6, 14, 8, 15], "omomo": [1, 3, 7, 10, 11]}'>
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              The IMU signals in this section are <strong>synthesized from motion sequences</strong>.
+            </p>
+          </div>
+        </div>
 
-      <div class="color-legend">
-        <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth (Motion)</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours (Motion)</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-red"></span> MobilePoser (Motion)</span>
-        <span class="legend-badge" style="background:#eefbe6; border-color:#b2e48a;">
-          <span class="legend-dot legend-dot-green"></span>
-          <span style="color:#3a7e0a;">Ground Truth (Text)</span>
-        </span>
-        <span class="legend-badge" style="background:#e8f6ff; border-color:#9fd4f5;">
-          <span class="legend-dot legend-dot-blue"></span>
-          <span style="color:#0a5a8a;">Ours (Text)</span>
-        </span>
-        <span class="legend-badge" style="background:#fff0f2; border-color:#f5b0ba;">
-          <span class="legend-dot legend-dot-red"></span>
-          <span style="color:#8a0a1a;">MotionGPT3 (Text)</span>
-        </span>
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
+        </div>
+
+        <div class="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
+        </div>
+        <div class="mc-samples"></div>
       </div>
 
-      <p class="has-text-grey" style="font-size:0.875rem; margin-bottom: 1.25rem;">
-        We visualize ground-truth objects and objects predicted by our method in the <strong>first frame</strong>.
-        Starting locations are shifted slightly for clarity. Summon takes MobilePoser motion predictions as input.
-      </p>
+    </div>
+  </section>
 
-      <div class="section-note section-note-warm">
-        Summon is tailored to a <strong>limited set of interaction types</strong> (e.g., sitting and lying down), which restricts its ability to generalize to diverse scene layouts.
+
+  <!-- ══════════════════════════════════════════════════════
+       OUT-OF-DISTRIBUTION OBJECT GENERATION
+       ══════════════════════════════════════════════════════ -->
+  <section class="section section-alt">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Out-Of-Distribution Object Generation</h2>
+
+      <hr>
+
+      <div class="mc-root" id="ood-object" data-manifest="OOD_OBJECT_MANIFEST"
+           data-hide-group-title data-text-keys="ours">
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              To show out-of-domain generalization, we test our model on HumanML3D and LINGO, two datasets <strong>without object annotations</strong>.
+              Our model is never trained on these two datasets for the object generation task, yet it still predicts plausible objects from the IMU signals alone.
+            </p>
+          </div>
+        </div>
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
+        </div>
+
+        <div class="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
+        </div>
+        <div class="mc-samples"></div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/11.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>The subject places trash can with both hands on ground. The subject picks trash from ground. The subject throws trash in trash can.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject bends body toward the ground, grasps a trash can with both hands, and then lifts it.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject places trash can with both hands on ground. The subject picks trash from the ground and drops it into a trash can.</div>
-            </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       TEXT SAMPLING DIVERSITY
+       ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Text Sampling Diversity</h2>
+
+      <hr>
+
+      <div class="td-root" id="text-diversity">
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              Our model supports sampling diverse text descriptions.
+              Given the <strong>same IMU input</strong> (HumanML3D, 5 sensors), we sample 32 captions from our model. Each bar shows how often a caption was sampled, with its perplexity (PPL); the greedy-decoded caption is tagged.
+            </p>
           </div>
         </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/0.mp4" type="video/mp4">
+        <div class="td-grid">
+        <article class="td-card">
+          <video controls muted loop playsinline preload="metadata" poster="./static/videos/text_diversity/006449_2/poster.jpg">
+            <source src="./static/videos/text_diversity/006449_2/comparison.mp4" type="video/mp4">
           </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>The subject walks around while carrying a side plate in their right hand.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject holds a spatula in their right hand while walking back and forth.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person walks back and forth while carrying a mixing bowl in their right hand.</div>
-            </div>
+          <p class="td-gt"><strong>GT</strong> A person is kicking a ball in a manner similar to soccer.</p>
+          <div class="td-head"><span>samples</span><span>sampled caption</span><span>PPL</span></div>
+          <ol class="td-bars">
+            <li><div class="td-bar" style="width:100.0%"></div><span class="td-share">9/32</span><span class="td-text">A person repeatedly kicks forward and walks back.</span><span class="td-ppl">1.16</span></li>
+            <li><div class="td-bar" style="width:66.7%"></div><span class="td-share">6/32</span><span class="td-text">A person steps left, kicks with the right foot, steps back, and delivers two left-foot kicks.</span><span class="td-ppl">1.08</span></li>
+            <li><div class="td-bar" style="width:66.7%"></div><span class="td-share">6/32</span><span class="td-text">A person is mimicking a soccer kick.</span><span class="td-ppl">1.26</span></li>
+            <li><div class="td-bar" style="width:55.6%"></div><span class="td-share">5/32</span><span class="td-text">A person is kicking a ball in the style of football/soccer. <span class="td-tag">greedy</span></span><span class="td-ppl">1.12</span></li>
+          </ol>
+          <p class="td-foot">7 distinct captions in 32 samples</p>
+        </article>
+        <article class="td-card">
+          <video controls muted loop playsinline preload="metadata" poster="./static/videos/text_diversity/M008653_0/poster.jpg">
+            <source src="./static/videos/text_diversity/M008653_0/comparison.mp4" type="video/mp4">
+          </video>
+          <p class="td-gt"><strong>GT</strong> A person ascends four steps with their left hand on the railing.</p>
+          <div class="td-head"><span>samples</span><span>sampled caption</span><span>PPL</span></div>
+          <ol class="td-bars">
+            <li><div class="td-bar" style="width:100.0%"></div><span class="td-share">10/32</span><span class="td-text">A person ascends the stairs, holding onto the handrail.</span><span class="td-ppl">1.12</span></li>
+            <li><div class="td-bar" style="width:40.0%"></div><span class="td-share">4/32</span><span class="td-text">A person ascends the stairs with an outstretched arm for support. <span class="td-tag">greedy</span></span><span class="td-ppl">1.13</span></li>
+            <li><div class="td-bar" style="width:40.0%"></div><span class="td-share">4/32</span><span class="td-text">A person climbs the stairs with their left hand on the railing.</span><span class="td-ppl">1.26</span></li>
+            <li><div class="td-bar" style="width:30.0%"></div><span class="td-share">3/32</span><span class="td-text">A person climbs the stairs twice while holding the railing with his left hand.</span><span class="td-ppl">1.19</span></li>
+          </ol>
+          <p class="td-foot">13 distinct captions in 32 samples</p>
+        </article>
+        <article class="td-card">
+          <video controls muted loop playsinline preload="metadata" poster="./static/videos/text_diversity/M009389_0/poster.jpg">
+            <source src="./static/videos/text_diversity/M009389_0/comparison.mp4" type="video/mp4">
+          </video>
+          <p class="td-gt"><strong>GT</strong> A person stands up and then bounces up and down.</p>
+          <div class="td-head"><span>samples</span><span>sampled caption</span><span>PPL</span></div>
+          <ol class="td-bars">
+            <li><div class="td-bar" style="width:100.0%"></div><span class="td-share">6/32</span><span class="td-text">A person is jumping up and down with both legs. <span class="td-tag">greedy</span></span><span class="td-ppl">1.18</span></li>
+            <li><div class="td-bar" style="width:83.3%"></div><span class="td-share">5/32</span><span class="td-text">A person is bouncing in one spot.</span><span class="td-ppl">1.41</span></li>
+            <li><div class="td-bar" style="width:66.7%"></div><span class="td-share">4/32</span><span class="td-text">A person is hopping with a light, effortless motion.</span><span class="td-ppl">1.17</span></li>
+            <li><div class="td-bar" style="width:50.0%"></div><span class="td-share">3/32</span><span class="td-text">A person hops with a light, airy step.</span><span class="td-ppl">1.20</span></li>
+          </ol>
+          <p class="td-foot">15 distinct captions in 32 samples</p>
+        </article>
+        <article class="td-card">
+          <video controls muted loop playsinline preload="metadata" poster="./static/videos/text_diversity/006868_2/poster.jpg">
+            <source src="./static/videos/text_diversity/006868_2/comparison.mp4" type="video/mp4">
+          </video>
+          <p class="td-gt"><strong>GT</strong> A person slowly lowers themselves and places their right hand on the ground.</p>
+          <div class="td-head"><span>samples</span><span>sampled caption</span><span>PPL</span></div>
+          <ol class="td-bars">
+            <li><div class="td-bar" style="width:100.0%"></div><span class="td-share">9/32</span><span class="td-text">A person bends down, picks up an object with their right hand, and comes back to standing. <span class="td-tag">greedy</span></span><span class="td-ppl">1.08</span></li>
+            <li><div class="td-bar" style="width:55.6%"></div><span class="td-share">5/32</span><span class="td-text">A person bends down, picks up something with their right hand, and comes back to standing.</span><span class="td-ppl">1.11</span></li>
+            <li><div class="td-bar" style="width:33.3%"></div><span class="td-share">3/32</span><span class="td-text">A person bends down to grasp an object with his right hand.</span><span class="td-ppl">1.15</span></li>
+            <li><div class="td-bar" style="width:33.3%"></div><span class="td-share">3/32</span><span class="td-text">A person slowly bends down and places their right hand on the floor.</span><span class="td-ppl">1.21</span></li>
+          </ol>
+          <p class="td-foot">13 distinct captions in 32 samples</p>
+        </article>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENE SAMPLING DIVERSITY
+       ══════════════════════════════════════════════════════ -->
+  <section class="section section-alt">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Object Sampling Diversity</h2>
+
+      <hr>
+
+      <div class="mc-root" id="scene-diversity" data-manifest="SCENE_SAMPLING_MANIFEST"
+           data-dataset-names='{"humoto": "HUMOTO (static objects)", "omomo": "OMOMO (dynamic objects)", "hiphi": "HiPHI (dynamic objects)"}'
+           data-sample-picks='{"humoto": [1, 6, 7], "omomo": [2, 3, 6], "hiphi": [1, 2, 6]}'>
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              Our model also supports sampling diverse objects.
+              The body is <strong>decoded once and shared by every sample</strong>; each sample then draws its own caption, object
+              categories, object instances (meshes) and first-frame layout.
+            </p>
           </div>
         </div>
-        <!-- <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/1.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person walks forward while carrying a table lamp with both hands, periodically turning and repositioning their grip on the table lamp's base and pole.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>A person walks back and forth while carrying a serving bowl with both hands.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>A person walks around while carrying a plastic bowl with both hands.</div>
-            </div>
-          </div>
-        </div> -->
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/15.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>The subject pulls the dining chair towards the subject. The subject moves the dining chair away from the subject.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject lifts the working chair. The subject holds with both hands. The subject puts working chair with both hands down on ground.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject lifts a serving bowl with both hands, holds it for 30 seconds, and then places it back on the table.</div>
-            </div>
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
+        </div>
+
+        <div class="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
+        </div>
+        <div class="mc-samples"></div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       Text-Conditioned Object Editing
+       ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container is-max-widescreen">
+
+      <h2 class="title is-3 section-title has-text-centered">Text-Conditioned Object Editing</h2>
+
+      <hr>
+
+      <div class="mc-root" id="swap-comparison" data-manifest="SWAP_MANIFEST"
+           data-sample-picks='{"omomo": [1, 4], "hiphi": [1, 3]}'>
+        <div class="mc-heading">
+          <div>
+            <p class="has-text-justified">
+              For each clip, we keep the model's predicted motion and text, and <strong>replace only the object name</strong> in the text.
+              Given the same IMU input and the edited text, the model outputs a different object that fits the new text and still follows the motion.
+            </p>
           </div>
         </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/3.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>The subject grasps and lifts the deep plate with right hand. The subject shakes the deep plate. The subject puts the deep plate on the table.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject uses a wok turner to scoop eggs from a frying pan, lifting the pan with their other hand, and places the eggs onto a side plate.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject picks up a frying pan and places it in front of the frying pan. The subject stirs the food into the frying pan with right hand.</div>
-            </div>
-          </div>
+        <div class="mc-toolbar">
+          <span class="mc-toolbar-hint">Use &lsaquo; / &rsaquo; on the video or the dots to browse samples.</span>
+          <button class="mc-autonext" type="button" aria-pressed="true">Auto-next: On</button>
         </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/5.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>A person removes the cap from a vacuum flask, dispenses soap inside, shakes it to wash the interior, and then grabs a sponge to continue cleaning.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject puts soap from a dispenser into a mug, then uses a sponge to wash the inside and outside of the mug over a sink.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject dispenses soap from a sink into a drawer tray, then places the tray in a storage bowl.</div>
-            </div>
-            <p style="font-size:0.78rem; color:#888; margin-bottom:0.3rem; font-style:italic;">Note: assets provided in the original dataset have broken textures, leading to rendering artifacts.</p>
-          </div>
+
+        <div class="mc-loading">
+          Basic preview mode. Open through a local HTTP server for synchronized playback and sample browsing.
         </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/9.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>The subject organizes and transfers cooking utensils into the draw organizer tray.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject organizes utensils by moving a turner, a soup ladle, a knife, and a peeler from a table into a drawer organizer tray.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject takes a serving bowl, transfers a frying pan, and then places them on a table.</div>
-            </div>
-          </div>
-        </div>
-        <!-- <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/humoto/24.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption">
-            <div class="caption-row">
-              <div><span class="caption-label" style="color: rgb(108,215,41);">GT</span>Carrying a stack of plastic bowls in their left hand, the subject walks forward, makes a clockwise turn, and then continues walking across the room.</div>
-              <div><span class="caption-label" style="color: rgb(97,208,255);">Ours</span>The subject carry vacuum flask with left hand walk back and forth repeatedly.</div>
-              <div><span class="caption-label" style="color: rgb(255,106,129);">MGPT3</span>The subject carries a mixing bowl in their left hand, walking forward, making several turns, and then walking back.</div>
-            </div>
-          </div>
-        </div> -->
+        <div class="mc-samples"></div>
       </div>
 
     </div>
@@ -479,30 +767,17 @@
   <section class="section section-alt">
     <div class="container is-max-widescreen">
 
-      <h2 class="title is-3 section-title has-text-centered">Applications</h2>
+      <h2 class="title is-3 section-title has-text-centered">Other Applications</h2>
 
       <hr>
 
       <h3 class="title is-4 subsection-title">Relocalization (IMU &rarr; Motion + Absolute Location)</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; margin-bottom: 1.25rem;">
-        <div class="content has-text-justified" style="margin-bottom: 0;">
-          <p class="reloc-question">
-            Imagine an everyday setting where a person performs many activities within the same environment, such as their home. 
-            Can our model infer the 3D scene layout and human–scene interactions from IMU signals collected during these activities?
-          </p>
-          <p>
-            We refer to this as <strong>3D re-localization</strong>. This task is non-trivial because IMU signals only capture motion 
-            relative to the first reading, containing no absolute positional information — the model must implicitly encode scene structure and 
-            reason about where each activity plausibly occurs.
-          </p>
-          <p>
-            To evaluate this, we fine-tune our model on a subset of <strong>ParaHome</strong> sequences, where motions are captured within a fixed 3D scene. 
-            Given new IMU signals, the goal is to recover the person's initial global translation and orientation within the scene.
-          </p>
-        </div>
-        <div>
-          <img src="./static/images/relocalization.png" alt="Relocalization illustration" style="width: 100%; border-radius: 8px;">
-        </div>
+      <div class="content has-text-justified" style="margin-bottom: 1.25rem;">
+        <p>
+          IMU signals only encode motion relative to the first frame. After fine-tuning on <strong>ParaHome</strong>, where every
+          sequence is captured in the same fixed scene, our model predicts the person's initial global position and orientation
+          in that scene from new IMU signals alone. This relies on a scene-specific prior learned during fine-tuning.
+        </p>
       </div>
       <div class="color-legend">
         <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
@@ -523,203 +798,11 @@
         </div>
       </div>
 
-      <h3 class="title is-4 subsection-title">Dynamic Object Predictions</h3>
-      <div class="content has-text-justified">
-        <p>
-          Our method can be extended to jointly predict dynamic objects and human motions from IMU signals on the <strong>OMOMO</strong> dataset.
-        </p>
-      </div>
-      <div class="color-legend">
-        <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours</span>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-        <div class="video-card">
-          <video controls muted preload playsinline autoplay loop>
-            <source src="./static/videos/dynamic_obj/sub16_largebox_023.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 1</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted preload playsinline autoplay loop>
-            <source src="./static/videos/dynamic_obj/sub16_vacuum_023.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 2</span></div>
-        </div>
-      </div>
 
     </div>
   </section>
 
 
-  <!-- ══════════════════════════════════════════════════════
-       ABLATION STUDIES
-       ══════════════════════════════════════════════════════ -->
-  <section class="section">
-    <div class="container is-max-widescreen">
-
-      <h2 class="title is-3 section-title has-text-centered">Ablation Studies</h2>
-      <div class="content has-text-justified">
-        <p>
-          We ablate the choice of <strong>autoregressive (causal) and bidirectional attention mechanisms</strong> for decoding motion tokens. 
-          While autoregressive decoding supports online and streaming settings, it is susceptible to error accumulation over long horizons; 
-          bidirectional attention leverages the full context for higher accuracy at the cost of requiring the complete input sequence upfront.
-        </p>
-      </div>
-
-      <div class="section-note section-note-warm">
-        Bidirectional attention on motion tokens produces smoother motion trajectories compared to the autoregressive one.
-      </div>
-
-      <div class="color-legend">
-        <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-green"></span> Ours (Bidirectional)</span>
-        <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours (Autoregressive)</span>
-      </div>
-
-      <h3 class="title is-4 subsection-title">DIP-IMU</h3>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/dipimu_bi_ar/dipimu_0.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 0</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/dipimu_bi_ar/dipimu_7.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 1</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/dipimu_bi_ar/dipimu_14.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 2</span></div>
-        </div>
-      </div>
-
-      <h3 class="title is-4 subsection-title">IMUPoser</h3>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem;">
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/imuposer_bi_ar/imuposer_0.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 0</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/imuposer_bi_ar/imuposer_7.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 1</span></div>
-        </div>
-        <div class="video-card">
-          <video controls muted autoplay loop preload playsinline>
-            <source src="./static/videos/imuposer_bi_ar/imuposer_14.mp4" type="video/mp4">
-          </video>
-          <div class="video-card-caption"><span class="caption-sample">Sample 2</span></div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-
-  <!-- ══════════════════════════════════════════════════════
-       LIMITATIONS
-       ══════════════════════════════════════════════════════ -->
-  <section class="section section-alt">
-    <div class="container is-max-widescreen">
-
-      <h2 class="title is-3 section-title has-text-centered">Limitations and Failure Cases</h2>
-
-      <hr>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
-
-        <!-- Left: Drifting -->
-        <div>
-          <h3 class="title is-4 subsection-title">Drifting</h3>
-          <div class="content has-text-justified">
-            <p>
-              Human motion may drift over time due to the accumulation of prediction errors, a limitation 
-              shared by all IMU&rarr;motion methods. We believe incorporating loop-closure mechanisms could alleviate this 
-              issue, and leave this direction for future work.
-            </p>
-          </div>
-          <div class="color-legend">
-            <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
-            <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours</span>
-            <span class="legend-badge"><span class="legend-dot legend-dot-red"></span> MobilePoser</span>
-          </div>
-          <div class="video-card">
-            <video controls muted preload playsinline autoplay loop>
-              <source src="./static/videos/limitation/drift_baseline.mp4" type="video/mp4">
-            </video>
-          </div>
-        </div>
-
-        <!-- Right: Hallucinations -->
-        <div>
-          <h3 class="title is-4 subsection-title">Hallucinations & Penetrations in Predicted Scenes</h3>
-          <div class="content has-text-justified">
-            <p>
-              IMU-to-scene prediction is highly ill-posed, as multiple scene layouts can correspond to the same 
-              IMU signals or motion sequences. We observe that objects predicted by our approach may sometimes not 
-              match the ground truth; this ambiguity could be mitigated with larger-scale datasets or by incorporating 
-              stronger priors about scene layouts. Additionally, predicted objects may exhibit interpenetrations, 
-              as our model does not explicitly enforce penetration constraints — incorporating such penalties could help 
-              alleviate this problem.
-            </p>
-          </div>
-          <div class="color-legend">
-            <span class="legend-badge"><span class="legend-dot legend-dot-white"></span> Ground Truth</span>
-            <span class="legend-badge"><span class="legend-dot legend-dot-blue"></span> Ours</span>
-          </div>
-          <div class="video-card">
-            <video controls muted preload playsinline autoplay loop>
-              <source src="./static/videos/humoto/21.mp4" type="video/mp4">
-            </video>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-
-  <!-- ══════════════════════════════════════════════════════
-       ACKNOWLEDGEMENTS
-       ══════════════════════════════════════════════════════ -->
-  <section class="section" id="acknowledgements">
-    <div class="container is-max-widescreen">
-      <div class="has-text-centered">
-        <h2 class="title is-3 section-title">Acknowledgements</h2>
-      </div>
-      <br>
-      <div class="acknowledgement-box">
-        This project is supported by the Amazon Illinois AICE Center Research Grant.
-        Hao-Yu Hsu is supported by the Amazon AI PhD Scholarship.
-        We thank the NCSA for providing computing resources.
-        We also thank Prof. Romit Roy Choudhury, Dr. Robinson Piramuthu, and
-        Dr. Gunnar Sigurdsson for their helpful discussions.
-      </div>
-    </div>
-  </section>
-
-
-  <section class="section" id="BibTeX">
-    <div class="container is-max-desktop content">
-      <h2 class="title is-3 section-title has-text-centered">BibTeX</h2>
-      <pre><code>@article{hsu2026imu4d,
-  title={Seeing Without Eyes: 4D Human-Scene Understanding from Wearable IMUs},
-  author={Hsu, Hao-Yu and Cheng, Tianhang and Wen, Jing and Schwing, Alexander G and Wang, Shenlong},
-  journal={arXiv preprint},
-  year={2026}
-}</code></pre>
-    </div>
-  </section>
 
   <footer class="footer">
     <div class="container">
@@ -735,6 +818,14 @@
       </div>
     </div>
   </footer>
+
+  <script src="./static/videos/model_comparison/manifest.js?v=20260925g"></script>
+  <script src="./static/videos/realworld_comparison/manifest.js?v=20260926w"></script>
+  <script src="./static/videos/scene_comparison/manifest.js?v=20260925h"></script>
+  <script src="./static/videos/scene_swap/manifest.js?v=20260925o"></script>
+  <script src="./static/videos/scene_sampling/manifest.js?v=20260925c"></script>
+  <script src="./static/videos/ood_object/manifest.js?v=20260926b"></script>
+  <script src="./static/js/model-comparison.js?v=20260926a"></script>
 
 </body>
 </html>

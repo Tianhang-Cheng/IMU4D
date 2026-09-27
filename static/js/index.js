@@ -14,6 +14,7 @@ function preloadInterpolationImages() {
 
 function setInterpolationImage(i) {
   var image = interp_images[i];
+  if (!image) return;
   image.ondragstart = function() { return false; };
   image.oncontextmenu = function() { return false; };
   $('#interpolation-image-wrapper').empty().append(image);
@@ -73,7 +74,8 @@ $(document).ready(function() {
         player.currentTime = player.duration / 100 * this.value;
       })
     }, false);*/
-    preloadInterpolationImages();
+    // Template leftover: only fetch the interpolation frames if the slider exists.
+    if (document.getElementById('interpolation-slider')) preloadInterpolationImages();
 
     $('#interpolation-slider').on('input', function(event) {
       setInterpolationImage(this.value);
