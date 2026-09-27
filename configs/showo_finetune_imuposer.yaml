@@ -1,0 +1,59 @@
+base_config: fast_train/base.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: "${oc.env:SHOWO_INIT_CHECKPOINT,exp/showo_pretrain_full}"
+    required_files: []
+    required_globs: []
+
+experiment:
+    name: showo_finetune_imuposer
+    output_dir: "${oc.env:FULL_DIR,exp/showo_finetune_imuposer}"
+    train_selected_dataset: imuposer
+    eval_selected_dataset: imuposer
+    strict_resume: false
+    reset_object_modules_on_weight_load: false
+    max_eval_imu_len: 200
+    min_train_imu_len: 24
+    max_train_imu_len: 480
+    train_cut_step: 4
+    eval_every: 500
+    save_every: 1000
+    full_eval_every: 2000
+    full_eval_frames: [60, 480]
+    full_eval_min_clip_frames: 1
+    full_eval_datasets:
+        - {name: imuposer, source: imuposer, root: "${oc.env:IMUPOSER_ROOT,data/processed/imuposer/v2}", sample_num: null, contiguous_windows: true, contiguous_window_min_frames: 24}
+    full_eval_rerun:
+        enabled: false
+
+model:
+    dynamic_object: false
+
+dataset:
+    params:
+        num_workers: 1
+        imu_path_or_url: "${oc.env:IMUPOSER_ROOT,data/processed/imuposer/v2}"
+        train_imu_paths_or_urls:
+            - "${oc.env:IMUPOSER_ROOT,data/processed/imuposer/v2}"
+        train_imu_source_weights: []
+        use_rewrite_texts: false
+        train_rewrite_roots:
+            - ""
+
+optimizer:
+    params:
+        learning_rate: "${oc.decode:${oc.env:FT_LR,2e-4}}"
+
+lr_scheduler:
+    params:
+        warmup_steps: 200
+
+training:
+    max_train_steps: 10000
+    lora:
+        enabled: "${oc.decode:${oc.env:LORA,1}}"
+        r: "${oc.decode:${oc.env:LORA_R,32}}"
+        alpha: "${oc.decode:${oc.env:LORA_ALPHA,null}}"
+    finetune_on_specific_dataset: true
+    train_only: []

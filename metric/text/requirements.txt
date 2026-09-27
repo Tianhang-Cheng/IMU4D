@@ -1,0 +1,3 @@
+# Versions used by MotionGPT3's public M2T evaluator.
+bert_score==0.3.13
+nlg_metricverse==0.9.9

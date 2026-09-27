@@ -1,0 +1,91 @@
+base_config: fast_train/base.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: "${oc.env:SHOWO_INIT_CHECKPOINT,exp/showo_pretrain_full}"
+    required_files: []
+    required_globs: []
+
+experiment:
+    name: showo_finetune_ncsa
+    output_dir: "${oc.env:FULL_DIR,exp/showo_finetune_ncsa}"
+    train_selected_dataset: ncsa
+    eval_selected_dataset: ncsa
+    strict_resume: false
+    reset_object_modules_on_weight_load: false
+    train_imu_layout_sampling:
+        enabled: true
+        anchor_probability: 1.0
+        anchors:
+            - {name: 3pt_rhip_lear_lelbow, active_imu_id: [1, 2, 4]}
+            - {name: 3pt_rhip_rear_lelbow, active_imu_id: [1, 3, 4]}
+            - {name: 2pt_rhip_lelbow, active_imu_id: [1, 4]}
+            - {name: 2pt_lear_lelbow, active_imu_id: [2, 4]}
+            - {name: 2pt_rhip_lear, active_imu_id: [1, 2]}
+        exploration_point_count_weights: []
+    eval_imu_configs:
+        - {name: 3pt_rhip_lear_lelbow, active_imu_id: [1, 2, 4]}
+        - {name: 3pt_rhip_rear_lelbow, active_imu_id: [1, 3, 4]}
+        - {name: 2pt_rhip_lelbow, active_imu_id: [1, 4]}
+    max_eval_imu_len: 200
+    min_train_imu_len: 24
+    max_train_imu_len: 480
+    train_cut_step: 4
+    eval_every: 0
+    sample_every: 0
+    is_start_eval: false
+    is_start_sample: false
+    save_every: 500
+    full_eval_every: 1000
+    full_eval_frames: [60, 480]
+    full_eval_min_clip_frames: 1
+    eval_footlock:
+        enabled: "${oc.env:NCSA_FOOTLOCK,auto}"
+        guard_m: "${oc.decode:${oc.env:NCSA_FOOTLOCK_GUARD_M,0.15}}"
+    full_eval_save_samples: true
+    full_eval_dump_records: true
+    full_eval_datasets:
+        - {name: ncsa_meeting_2pt, source: ncsa, root: "${oc.env:NCSA_MEETING_ROOM_2PT_MV_ROOT,data/processed/ncsa/meeting_room_2pt_mv}", sample_num: null, layouts: [2pt_rhip_lelbow], contiguous_windows: true, contiguous_window_min_frames: 24}
+        - {name: ncsa_meeting_3pt, source: ncsa, root: "${oc.env:NCSA_MEETING_ROOM_3PT_MV_ROOT,data/processed/ncsa/meeting_room_3pt_mv}", sample_num: null, layouts: [3pt_rhip_lear_lelbow, 3pt_rhip_rear_lelbow, 2pt_rhip_lelbow], contiguous_windows: true, contiguous_window_min_frames: 24}
+    full_eval_rerun:
+        enabled: false
+
+model:
+    dynamic_object: false
+
+dataset:
+    params:
+        imu_path_or_url: "${oc.env:NCSA_POSE_EVAL_ROOT,data/processed/ncsa/meeting_room_3pt_mv}"
+        train_imu_paths_or_urls:
+            - "${oc.env:NCSA_V3_TRAIN_ROOT,data/processed/ncsa/v3}"
+            - "${oc.env:NCSA_MEETING_ROOM_2PT_MV_ROOT,data/processed/ncsa/meeting_room_2pt_mv}"
+            - "${oc.env:NCSA_MEETING_ROOM_3PT_MV_ROOT,data/processed/ncsa/meeting_room_3pt_mv}"
+        train_imu_source_weights: [1, 1, 1]
+        use_rewrite_texts: "${oc.decode:${oc.env:NCSA_TEXT_GT,0}}"
+        train_rewrite_roots: ["", "", ""]
+
+optimizer:
+    params:
+        learning_rate: "${oc.decode:${oc.env:FT_LR,2e-4}}"
+
+lr_scheduler:
+    params:
+        warmup_steps: 100
+
+training:
+    real_imu_heading_aug:
+        enabled: "${oc.decode:${oc.env:NCSA_HEADING_AUG,0}}"
+        prob: 0.5
+        deg: 180.0
+        scope: "${oc.env:NCSA_HEADING_AUG_SCOPE,unsupervised_orient}"
+    short_window_global_supervision:
+        enabled: "${oc.decode:${oc.env:NCSA_SHORT_WINDOW_GLOBAL,0}}"
+        max_frames: "${oc.decode:${oc.env:NCSA_SHORT_WINDOW_MAX_FRAMES,60}}"
+    max_train_steps: 2000
+    num_train_epochs: 4000
+    lora:
+        enabled: "${oc.decode:${oc.env:LORA,1}}"
+        r: "${oc.decode:${oc.env:LORA_R,32}}"
+        alpha: "${oc.decode:${oc.env:LORA_ALPHA,null}}"
+    finetune_on_specific_dataset: true
+    train_only: []

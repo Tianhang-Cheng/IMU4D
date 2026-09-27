@@ -74,6 +74,7 @@ class EMA:
         power: Union[float, int] = 2 / 3,
         model_cls: Optional[Any] = None,
         model_config: Dict[str, Any] = None,
+        device: Optional[Union[torch.device, str]] = None,
         **kwargs,
     ):
         """
@@ -86,8 +87,9 @@ class EMA:
             inv_gamma (float):
                 Inverse multiplicative factor of EMA warmup. Default: 1. Only used if `use_ema_warmup` is True.
             power (float): Exponential factor of EMA warmup. Default: 2/3. Only used if `use_ema_warmup` is True.
-            device (Optional[Union[str, torch.device]]): The device to store the EMA weights on. If None, the EMA
-                        weights will be stored on CPU.
+            device (Optional[Union[str, torch.device]]): The device to store the EMA shadow on. None (the default)
+                        keeps the shadow on the same device as the tracked parameters (the accelerator during
+                        training); pass "cpu" to keep the shadow off the accelerator (e.g. to save GPU memory).
 
         @crowsonkb's notes on EMA Warmup:
             If gamma=1 and power=1, implements a simple average. gamma=1, power=2/3 are good values for models you plan
@@ -97,7 +99,14 @@ class EMA:
         """
 
         parameters = list(parameters)
-        self.shadow_params = [p.clone().detach() for p in parameters]
+        if device is None:
+            self.shadow_params = [p.detach().clone() for p in parameters]
+        else:
+            device = torch.device(device)
+            self.shadow_params = [
+                p.detach().to(device) if p.device != device else p.detach().clone()
+                for p in parameters
+            ]
 
         self.temp_stored_params = None
 
@@ -168,13 +177,37 @@ class EMA:
         self.cur_decay_value = decay
         one_minus_decay = 1 - decay
 
+        # Same-device trainable pairs go through one fused multi-tensor lerp
+        # (no per-tensor kernel launches, no temporaries); the rest fall back
+        # to the per-tensor path below.
+        fused_shadow, fused_param = [], []
+        for s_param, param in zip(self.shadow_params, parameters):
+            if (
+                param.requires_grad
+                and s_param.device == param.device
+                and s_param.dtype == param.dtype
+                and s_param.is_floating_point()
+            ):
+                fused_shadow.append(s_param)
+                fused_param.append(param.detach())
+        if fused_shadow:
+            torch._foreach_lerp_(fused_shadow, fused_param, one_minus_decay)
+
         for s_param, param in zip(self.shadow_params, parameters):
             if param.requires_grad:
-                s_param.sub_(one_minus_decay * (s_param - param))
+                if s_param.device == param.device:
+                    if s_param.dtype == param.dtype and s_param.is_floating_point():
+                        continue  # handled by the fused lerp above
+                    s_param.sub_(one_minus_decay * (s_param - param))
+                else:
+                    # Shadow held off-device (e.g. CPU): fold this step's param
+                    # values in where the shadow lives, transferring one tensor
+                    # at a time so no full-model copy appears on the accelerator.
+                    s_param.mul_(decay).add_(
+                        param.detach().to(s_param.device), alpha=one_minus_decay
+                    )
             else:
-                s_param.copy_(param)
-
-        torch.cuda.empty_cache()
+                s_param.copy_(param.detach().to(s_param.device))
 
     def copy_to(self, parameters: Iterable[torch.nn.Parameter]) -> None:
         """

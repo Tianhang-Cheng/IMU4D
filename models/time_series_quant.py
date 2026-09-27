@@ -1,8 +1,8 @@
 import json
+import math
 import numpy as np
 import os
 import random
-import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -87,9 +87,9 @@ def seed_everything(seed=42, deterministic=True):
         torch.use_deterministic_algorithms(True, warn_only=True)
     else:
         print("Deterministic operations disabled.")
-        # Better performance, but not fully deterministic
+        # Preserve the caller's cuDNN search policy. In particular, creating
+        # the tokenizer must not re-enable autotuning in variable-length runs.
         torch.backends.cudnn.deterministic = False
-        torch.backends.cudnn.benchmark = True
 
 
 def moving_average_filter(tensor, window_size, dim=1):
@@ -730,9 +730,14 @@ class DiscreteQuantizer(nn.Module):
                  compression_rate=4, n_bins=8192, d_model=2048,
                  large_model=False, global_model=False, use_6d=False,
                  use_rope_embed: bool = False,
-                 totem_folder='/home/tianhang/code/imu-human-mllm/third_party/TOTEM'):
+                 totem_folder='motion_tokenizer'):
         super(DiscreteQuantizer, self).__init__()
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # torch.device('cuda') has no index, so under multi-GPU every rank resolved
+        # it to cuda:0 and put the VQVAE there while training on its own device ->
+        # "CUDA error: an illegal memory access". current_device() follows the
+        # device accelerate assigns to this rank.
+        self.device = (torch.device(f'cuda:{torch.cuda.current_device()}')
+                       if torch.cuda.is_available() else torch.device('cpu'))
         self.compression_rate = compression_rate
         self.n_bins = n_bins
         self.totem_folder = totem_folder
@@ -814,9 +819,14 @@ class DiscreteQuantizer(nn.Module):
         """
 
         if isinstance(batch_x, np.ndarray):
-            x = copy.deepcopy(batch_x)
+            # Keep preprocessing on the quantizer device.  The previous path
+            # copied every training target through CPU NumPy before immediately
+            # moving it back to the GPU.
+            x = torch.as_tensor(batch_x, device=self.device).clone()
         elif isinstance(batch_x, torch.Tensor):
-            x = batch_x.clone()
+            x = batch_x.detach().to(self.device).clone()
+        else:
+            raise TypeError(f'Expected numpy array or torch tensor, got {type(batch_x)!r}')
 
         if len(x.shape) == 2:
             x = x[None]
@@ -826,9 +836,6 @@ class DiscreteQuantizer(nn.Module):
 
         assert len(x.shape) == 3, f'Invalid data shape: {x.shape}'
         assert 'data_type' in kwargs or kwargs.get('no_preprocess', False), f'Invalid data type: {kwargs.get("data_type", "unknown")}'
-
-        if isinstance(x, torch.Tensor):
-            x = x.detach().cpu().numpy()
 
         bs, ntime, nvars = x.shape
 
@@ -841,20 +848,20 @@ class DiscreteQuantizer(nn.Module):
         if ntime % self.compression_rate != 0:
             # zero padding
             pad_len = self.compression_rate - ntime % self.compression_rate
-            pad_value = np.zeros((bs, pad_len, nvars)) # + batch_x[:, -1:]
-            x = np.concatenate((x, pad_value), axis=1)
+            pad_value = x.new_zeros((bs, pad_len, nvars)) # + batch_x[:, -1:]
+            x = torch.cat((x, pad_value), dim=1)
             ntime = x.shape[1]
 
         pad_len2 = 0
         if ntime % normalization_window_size != 0:
             # zero padding
             pad_len2 = normalization_window_size - ntime % normalization_window_size
-            pad_value = np.zeros((bs, pad_len2, nvars)) # + batch_x[:, -1:]
-            x = np.concatenate((x, pad_value), axis=1)
+            pad_value = x.new_zeros((bs, pad_len2, nvars)) # + batch_x[:, -1:]
+            x = torch.cat((x, pad_value), dim=1)
             ntime = x.shape[1]
 
         n_windows = ntime // normalization_window_size
-        batch_x_window = torch.from_numpy(x).to(weight_type).to(self.device) # [bs, ntime, nvars]
+        batch_x_window = x.to(dtype=weight_type) # [bs, ntime, nvars]
 
         # apply moving average filter to smooth the input
         # if kwargs.get('smooth_input', False):            
@@ -900,8 +907,61 @@ class DiscreteQuantizer(nn.Module):
                 batch_x_window = batch_x_window.reshape(bs, -1, ntime, self.rot_var_num).permute(0, 2, 1, 3).reshape(bs, ntime, -1) # [bs, ntime, nvars]
 
             if not self.use_6d:
-                batch_x_window = batch_x_window / np.pi # normalize to [-1, 1]
+                batch_x_window = batch_x_window / math.pi # normalize to [-1, 1]
             batch_x_window = batch_x_window.reshape(bs, n_windows, normalization_window_size, nvars)
+
+        elif kwargs['data_type'] == 'motion':
+            # Joint trajectory/root-orientation/body-pose path.  Variables are
+            # still encoded independently by the scalar time-series VQ model,
+            # so concatenating them here is numerically equivalent to three
+            # forward calls while launching the encoder/decoder only once.
+            traj_nvars = int(kwargs.get('traj_nvars', 3))
+            orient_nvars = int(kwargs.get('orient_nvars', self.rot_var_num))
+            pose_start = traj_nvars + orient_nvars
+            if pose_start > nvars:
+                raise ValueError(
+                    f'Invalid motion layout: {traj_nvars}+{orient_nvars}>{nvars}'
+                )
+
+            if self.accumulate:
+                batch_x_window[:, 1:, :traj_nvars] = (
+                    batch_x_window[:, 1:, :traj_nvars]
+                    - batch_x_window[:, :-1, :traj_nvars]
+                )
+
+            if self.accumulate_orient:
+                root = batch_x_window[:, :, traj_nvars:pose_start]
+                root = root.reshape(bs, ntime, orient_nvars // self.rot_var_num, -1)
+                root = calculate_relative_rotation(
+                    root,
+                    src_rep='6d' if self.use_6d else 'aa',
+                    tgt_rep='mat',
+                )
+                root = root.permute(0, 2, 1, 3, 4).reshape(-1, ntime, 3, 3)
+                root = convert_rotation(root, src_rep='mat', tgt_rep='6d')
+                root = root.reshape(bs, -1, ntime, self.rot_var_num)
+                root = root.permute(0, 2, 1, 3).reshape(bs, ntime, orient_nvars)
+                batch_x_window[:, :, traj_nvars:pose_start] = root
+
+            if self.accumulate_pose and pose_start < nvars:
+                pose_nvars = nvars - pose_start
+                pose = batch_x_window[:, :, pose_start:]
+                pose = pose.reshape(bs, ntime, pose_nvars // self.rot_var_num, -1)
+                pose = calculate_relative_rotation(
+                    pose,
+                    src_rep='6d' if self.use_6d else 'aa',
+                )
+                pose = pose.permute(0, 2, 1, 3, 4).reshape(-1, ntime, 3, 3)
+                pose = convert_rotation(pose, src_rep='mat', tgt_rep='6d')
+                pose = pose.reshape(bs, -1, ntime, self.rot_var_num)
+                pose = pose.permute(0, 2, 1, 3).reshape(bs, ntime, pose_nvars)
+                batch_x_window[:, :, pose_start:] = pose
+
+            if not self.use_6d:
+                batch_x_window[:, :, traj_nvars:] /= math.pi
+            batch_x_window = batch_x_window.reshape(
+                bs, n_windows, normalization_window_size, nvars
+            )
         
         else:
             raise ValueError(f'Invalid data type: {kwargs["data_type"]}. Supported types are: imu, traj, orient.')
@@ -1002,7 +1062,7 @@ class DiscreteQuantizer(nn.Module):
             for j, var_idx in enumerate(range(nvars)):
                 ax = axes[j]
 
-                a = x[0, :, var_idx]
+                a = x[0, :, var_idx].detach().cpu().numpy()
                 b = x_recon_denorm[0, :, var_idx].detach().cpu().numpy()
 
                 ax.plot(a, label='original')
@@ -1117,8 +1177,7 @@ class DiscreteQuantizer(nn.Module):
             # return (x_recon_denorm, quantized_mean, quantized_std, batch_x_cuda), static_indices, mean_indices, std_indices
             return x_recon_denorm, static_indices, gt_mean, gt_std            
 
-        dynamic_indices = np.concatenate((mean_indices, std_indices), axis=-1) # [bs, ntime//compression_rate, nvars*2]
-        dynamic_indices = torch.from_numpy(dynamic_indices).to(self.device)
+        dynamic_indices = torch.cat((mean_indices, std_indices), dim=-1) # [bs, ntime//compression_rate, nvars*2]
         return x_recon_denorm, static_indices, dynamic_indices
 
     def mean_embedder(self, idx):

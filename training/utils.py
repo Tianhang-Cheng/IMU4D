@@ -1,5 +1,6 @@
 import math
 import random
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -9,9 +10,31 @@ from typing import Any, List, Tuple, Union
 ##################################################
 #              config utils
 ##################################################
+def load_config_file(path: Union[str, Path], _stack: Tuple[Path, ...] = ()) -> DictConfig:
+    """Load an OmegaConf file with optional relative ``base_config`` inheritance."""
+    config_path = Path(path).expanduser().resolve()
+    if config_path in _stack:
+        chain = " -> ".join(str(item) for item in (*_stack, config_path))
+        raise ValueError(f"Circular base_config inheritance: {chain}")
+    if not config_path.is_file():
+        raise FileNotFoundError(f"Config file does not exist: {config_path}")
+
+    current = OmegaConf.load(config_path)
+    base_ref = current.pop("base_config", None)
+    if base_ref is None:
+        return current
+    base_path = Path(str(base_ref)).expanduser()
+    if not base_path.is_absolute():
+        base_path = config_path.parent / base_path
+    base = load_config_file(base_path, (*_stack, config_path))
+    return OmegaConf.merge(base, current)
+
+
 def get_config():
     cli_conf = OmegaConf.from_cli()
-    yaml_conf = OmegaConf.load(cli_conf.config)
+    if "config" not in cli_conf:
+        raise ValueError("Pass a config file as config=/path/to/config.yaml")
+    yaml_conf = load_config_file(cli_conf.config)
     conf = OmegaConf.merge(yaml_conf, cli_conf)
 
     return conf

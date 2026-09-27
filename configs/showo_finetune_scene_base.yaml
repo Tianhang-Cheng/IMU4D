@@ -1,0 +1,45 @@
+base_config: fast_train/base.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: "${oc.env:SHOWO_INIT_CHECKPOINT,exp/showo_pretrain_full}"
+    required_files: []
+    required_globs: []
+
+experiment:
+    strict_resume: false
+    eval_object_list_override: no_early_stop
+    eval_caption_verify_threshold: 0.05
+    reset_object_modules_on_weight_load: false
+    eval_every: 250
+    save_every: 500
+    full_eval_every: 2500
+    full_eval_dump_records: true
+    checkpoints_total_limit: 10
+    full_eval_rerun:
+        enabled: false
+
+dataset:
+    params:
+        train_rewrite_roots: null
+        num_workers: 1
+
+model:
+    dynamic_object: true
+    object_geometry_features: "${oc.decode:${oc.env:OBJ_GEOM_FEATURES,null}}"
+
+training:
+    finetune_on_specific_dataset: false
+    lora:
+        enabled: "${oc.decode:${oc.env:LORA,0}}"
+        r: "${oc.decode:${oc.env:LORA_R,32}}"
+        alpha: "${oc.decode:${oc.env:LORA_ALPHA,null}}"
+    train_only: []
+
+optimizer:
+    params:
+        learning_rate: "${oc.decode:${oc.env:FT_LR,5e-5}}"
+
+lr_scheduler:
+    params:
+        warmup_steps: 100

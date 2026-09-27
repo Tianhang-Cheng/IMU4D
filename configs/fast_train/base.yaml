@@ -1,0 +1,4 @@
+base_config: ../showo_base.yaml
+
+experiment:
+    use_ema: true

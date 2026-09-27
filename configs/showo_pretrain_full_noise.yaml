@@ -1,0 +1,27 @@
+base_config: fast_train/base.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: "${oc.env:SHOWO_INIT_CHECKPOINT,exp/showo_pretrain_full}"
+    required_files: []
+
+experiment:
+    name: showo_pretrain_full_noise
+    output_dir: "${oc.env:FULL_DIR,exp/showo_pretrain_full_noise}"
+    strict_resume: false
+    reset_object_modules_on_weight_load: false
+    full_eval_every: 8000
+
+optimizer:
+    params:
+        learning_rate: 5e-05
+
+lr_scheduler:
+    params:
+        warmup_steps: 500
+
+training:
+    max_train_steps: 24000
+    imu_noise:
+        enabled: true
+    smooth_real_imu_acc: false

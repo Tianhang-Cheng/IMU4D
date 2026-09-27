@@ -1,0 +1,19 @@
+base_config: showo_finetune_scene_base.yaml
+
+experiment:
+    name: showo_finetune_hiphi
+    output_dir: "${oc.env:FULL_DIR,exp/showo_finetune_hiphi}"
+    train_selected_dataset: HiPHI
+    eval_selected_dataset: HiPHI
+    full_eval_datasets:
+        - {name: HiPHI, root: "${oc.env:HIPHI_ROOT,data/processed/hiphi/v1}", sample_num: null}
+
+dataset:
+    params:
+        imu_path_or_url: "${oc.env:HIPHI_ROOT,data/processed/hiphi/v1}"
+        train_imu_paths_or_urls:
+            - "${oc.env:HIPHI_ROOT,data/processed/hiphi/v1}"
+        train_imu_source_weights: []
+
+training:
+    max_train_steps: 5000

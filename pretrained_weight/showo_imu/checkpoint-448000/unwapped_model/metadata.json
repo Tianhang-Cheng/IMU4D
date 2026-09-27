@@ -1,9 +1,0 @@
-{
-  "global_step": 448000,
-  "epoch": 8,
-  "loss": null,
-  "model_config": {
-    "vocab_size": 58603,
-    "codebook_size": 8192
-  }
-}

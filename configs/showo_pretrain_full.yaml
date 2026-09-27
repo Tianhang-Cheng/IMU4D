@@ -1,0 +1,11 @@
+base_config: showo_base.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: "${oc.env:SHOWO_INIT_CHECKPOINT,exp/showo_adapter_warmup}"
+experiment:
+    name: showo_pretrain_full
+    output_dir: "${oc.env:FULL_DIR,exp/showo_pretrain_full}"
+
+training:
+    max_train_steps: 500000

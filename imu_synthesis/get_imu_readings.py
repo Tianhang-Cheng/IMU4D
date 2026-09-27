@@ -108,9 +108,28 @@ def simulate_imu_readings(p, R, fps=30, noise_raw_traj=True, noise_syn_imu=True,
         for i in range(1, N):
             R_sim[i] = R_sim[i - 1].matmul(dR[i])
 
-    # add Gaussian noise
+    # add orientation-estimation error
     if noise_est_orient:
-        nR = convert_rotation(torch.randn(N, 6, 3) * 0.1 * k, 'aa', 'mat').view(-1, 6, 3, 3)
+        # Real on-device orientation filters output smooth, slowly-varying
+        # estimates (drift that gravity/magnetometer corrections keep bounded),
+        # NOT independent per-frame errors. Modeling it as per-frame white noise
+        # (previously ~3.6 deg/axis every frame) both overstates the magnitude
+        # and injects ~0.6 m/s^2 white gravity leakage into the world-frame
+        # accelerometer channel.
+        #
+        # Instead use a mean-reverting AR(1) per axis per sensor:
+        #     err_t = rho * err_{t-1} + eps_t,   eps_t ~ N(0, sigma_step)
+        # whose stationary std is sigma_step / sqrt(1 - rho^2). With rho=0.95
+        # and ~1.5 deg RMS per axis this resembles a well-behaved AHRS that
+        # slowly corrects its own bias. Applied in the sensor-local frame as a
+        # post-multiplied rotation error, matching the previous convention.
+        _rho = 0.95
+        _target_std = torch.deg2rad(torch.tensor(1.5))  # ~1.5 deg per axis
+        _step_std = _target_std * torch.sqrt(torch.tensor(1.0 - _rho * _rho))
+        _err_aa = torch.zeros(N, 6, 3)
+        for _t in range(1, N):
+            _err_aa[_t] = _rho * _err_aa[_t - 1] + torch.randn(6, 3) * _step_std
+        nR = convert_rotation(_err_aa.reshape(-1, 3), 'aa', 'mat').view(N, 6, 3, 3)
         R_sim = R_sim.matmul(nR)
 
     # simulate T-pose calibration

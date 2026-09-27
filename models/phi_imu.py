@@ -63,6 +63,13 @@ _CHECKPOINT_FOR_DOC = "microsoft/phi-1"
 _CONFIG_FOR_DOC = "PhiConfig"
 
 
+def _cache_usable_length(cache, new_sequence_length: int, layer_idx: int = 0) -> int:
+    """Bridge the pre-4.57 and current Transformers cache APIs."""
+    if hasattr(cache, "get_usable_length"):
+        return cache.get_usable_length(new_sequence_length, layer_idx)
+    return cache.get_seq_length(layer_idx)
+
+
 # Copied from transformers.models.llama.modeling_llama._get_unpad_data
 def _get_unpad_data(attention_mask):
     seqlens_in_batch = attention_mask.sum(dim=-1, dtype=torch.int32)
@@ -339,7 +346,9 @@ class PhiAttention(nn.Module):
                     "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
                     "with a layer index."
                 )
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            kv_seq_len += _cache_usable_length(
+                past_key_value, kv_seq_len, self.layer_idx
+            )
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
 
         # Partial rotary embedding
@@ -462,7 +471,9 @@ class PhiFlashAttention2(PhiAttention):
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            kv_seq_len += _cache_usable_length(
+                past_key_value, kv_seq_len, self.layer_idx
+            )
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
 
         # Partial rotary embedding
@@ -691,7 +702,9 @@ class PhiSdpaAttention(PhiAttention):
                     "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
                     "with a layer index."
                 )
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            kv_seq_len += _cache_usable_length(
+                past_key_value, kv_seq_len, self.layer_idx
+            )
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
 
         # Partial rotary embedding
@@ -1007,10 +1020,16 @@ class PhiModel(PhiPreTrainedModel):
                 use_cache = False
 
         if use_cache:
-            use_legacy_cache = not isinstance(past_key_values, Cache)
+            if past_key_values is None:
+                past_key_values = DynamicCache(config=self.config)
+                use_legacy_cache = False
+            else:
+                use_legacy_cache = not isinstance(past_key_values, Cache)
             if use_legacy_cache:
                 past_key_values = DynamicCache.from_legacy_cache(past_key_values)
-            past_key_values_length = past_key_values.get_usable_length(seq_length)
+            past_key_values_length = _cache_usable_length(
+                past_key_values, seq_length
+            )
 
         if position_ids is None:
             device = input_ids.device if input_ids is not None else inputs_embeds.device
@@ -1023,6 +1042,27 @@ class PhiModel(PhiPreTrainedModel):
             inputs_embeds = self.embed_tokens(input_ids)
 
         inputs_embeds = self.embed_dropout(inputs_embeds)
+
+        # Accept the standard compact [batch, key_length] padding mask on fully
+        # causal paths. Custom 4D block masks (bidirectional IMU/motion spans)
+        # continue to pass through unchanged.
+        if attention_mask is not None and attention_mask.dim() == 2:
+            if self._use_flash_attention_2:
+                attention_mask = attention_mask if (attention_mask == 0).any() else None
+            elif self._use_sdpa and not output_attentions:
+                attention_mask = _prepare_4d_causal_attention_mask_for_sdpa(
+                    attention_mask,
+                    (batch_size, seq_length),
+                    inputs_embeds,
+                    past_key_values_length,
+                )
+            else:
+                attention_mask = _prepare_4d_causal_attention_mask(
+                    attention_mask,
+                    (batch_size, seq_length),
+                    inputs_embeds,
+                    past_key_values_length,
+                )
 
         hidden_states = inputs_embeds
 

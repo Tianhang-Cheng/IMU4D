@@ -1,0 +1,209 @@
+{
+ "_convention": "resting pose, +y up, front / working end toward +z, tool handles toward -z; rot_deg_xyz = extrinsic xyz Euler (deg) applied after the automatic up + footprint-yaw steps; mode lay_flat = OBB longest->z shortest->y (handheld tools); decided by eye 2026-09-15 from exp/object_sheet/candidates",
+ "humoto/knife": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/fork": {
+  "mode": "lay_flat"
+ },
+ "humoto/spoon": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   0,
+   180
+  ]
+ },
+ "humoto/peeler": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/pen": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/hammer": {
+  "mode": "lay_flat"
+ },
+ "humoto/screwdriver": {
+  "mode": "lay_flat"
+ },
+ "humoto/whisk": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/soup_ladle": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   0,
+   180
+  ]
+ },
+ "humoto/spatula": {
+  "mode": "lay_flat"
+ },
+ "humoto/turner": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/wok_turner": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/lint_roller": {
+  "mode": "lay_flat"
+ },
+ "humoto/shower_squeegee": {
+  "mode": "lay_flat"
+ },
+ "humoto/phone": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   0,
+   180
+  ]
+ },
+ "humoto/notebook": {
+  "mode": "lay_flat"
+ },
+ "humoto/usb": {
+  "mode": "lay_flat"
+ },
+ "humoto/guitar": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/ukelele": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "humoto/clothes_hanger": {
+  "mode": "lay_flat"
+ },
+ "humoto/cutting_board": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   180,
+   180
+  ]
+ },
+ "humoto/frying_pan": {
+  "mode": "lay_flat",
+  "rot_deg_xyz": [
+   0,
+   0,
+   180
+  ]
+ },
+ "humoto/mixing_bowl": {
+  "mode": "far_point",
+  "target": "-z"
+ },
+ "hiphi/Chair_Q_1": {
+  "rot_deg_xyz": [
+   0,
+   180,
+   0
+  ]
+ },
+ "omomo/woodchair": {
+  "rot_deg_xyz": [
+   0,
+   90,
+   0
+  ]
+ },
+ "humoto/mug": {
+  "mode": "far_point",
+  "target": "-z"
+ },
+ "hiphi/Table_C_1": {
+  "rot_deg_xyz": [
+   0,
+   -90,
+   0
+  ]
+ },
+ "hiphi/StepStool_D_1": {
+  "rot_deg_xyz": [
+   0,
+   -90,
+   0
+  ]
+ },
+ "humoto/vacuum_flask": {
+  "mode": "far_point",
+  "target": "-z"
+ },
+ "humoto/soap_dispenser": {
+  "mode": "far_point",
+  "target": "+z"
+ },
+ "omomo/mop": {
+  "mode": "longest_up"
+ },
+ "omomo/vacuum": {
+  "mode": "longest_up"
+ },
+ "hiphi/Chair_C_1": {
+  "rot_deg_xyz": [
+   0,
+   -90,
+   0
+  ]
+ },
+ "hiphi/StepStool_A_1": {
+  "rot_deg_xyz": [
+   0,
+   -90,
+   0
+  ]
+ },
+ "hiphi/Trashbin_B_2": {
+  "mode": "pca"
+ },
+ "hiphi/Clothrack_B_1": {
+  "rot_deg_xyz": [
+   0,
+   90,
+   0
+  ],
+  "note": "broad face toward +z"
+ }
+}

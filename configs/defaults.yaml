@@ -1,0 +1,202 @@
+wandb:
+  entity: null
+  resume: 'auto'
+
+experiment:
+    project: "imu4d_release"
+    name: "imu4d"
+    output_dir: "exp/imu4d"
+    ckpt_dir: "exp/imu4d"
+    max_train_examples_t2i: 20000000
+    max_train_examples_mmu: 40000000
+    save_every: 500
+    sample_every: 500
+    eval_every: 500
+    max_eval_sample_num: 50
+    max_eval_imu_len: 60
+    eval_pose_filter:
+        enabled: true
+        cutoff_hz: 3.0
+        order: 4
+    full_eval_every: 0
+    full_eval_datasets: null
+    full_eval_sample_num: 1945
+    full_eval_dataset: LINGO
+    full_eval_frames: null
+    full_eval_dump_records: true
+    full_eval_save_samples: false
+    full_eval_min_clip_frames: null
+
+    train_random_cut: True
+    min_train_imu_len: 24
+    max_train_imu_len: 480
+    train_cut_per_batch: True
+    train_cut_step: 4
+    train_cut_batch_overhead_frames: 60
+
+    max_new_text_tokens: 60
+    eval_decode_text: null
+    max_object_id_tokens: 1
+    min_object_id_tokens: 1
+    eval_object_list_override: null
+    eval_object_multilabel_threshold: 0.1
+    eval_feed_soobj: true
+
+    is_start_eval: True
+    is_start_sample: True
+    log_every: 5
+    log_grad_norm_every: 500
+    resume_from_checkpoint: True
+    load_without_optimizer: False
+    reset_step_on_weight_load: False
+    use_ema: True
+    ema_decay: 0.999
+    checkpoints_total_limit: 4
+    mode: "train"
+    train_selected_dataset: None
+    eval_selected_dataset: None
+    eval_selected_imu_seq: null  # path to one .pkl; if set, test mode evaluates only this file
+    train_invalid_imu_id: "random"
+    train_imu_layout_sampling:
+        enabled: false
+        anchor_probability: 0.8
+        anchors:
+            - {name: 5pt_full, active_imu_id: [0, 1, 2, 4, 5]}
+            - {name: 3pt_lhip_lear_lelbow, active_imu_id: [0, 2, 4]}
+            - {name: 3pt_rhip_lear_lelbow, active_imu_id: [1, 2, 4]}
+            - {name: 3pt_lhip_lear_relbow, active_imu_id: [0, 2, 5]}
+            - {name: 3pt_rhip_lear_relbow, active_imu_id: [1, 2, 5]}
+        exploration_point_count_weights:
+            - {point_count: 1, weight: 1}
+            - {point_count: 2, weight: 4}
+            - {point_count: 3, weight: 10}
+            - {point_count: 4, weight: 3}
+            - {point_count: 5, weight: 1}
+            - {point_count: 6, weight: 1}
+    eval_invalid_imu_id: []
+    eval_imu_configs: null
+    save_test_sample: False # during testing, save the sample to the output directory
+    save_ckpt_when_eval: False # during testing, save the checkpoint to the output directory
+
+model:
+    totem_folder: "motion_tokenizer"
+    showo:
+        load_from_showo: False
+        pretrained_model_path: "pretrained_weight"
+        vocab_size: 58498
+        llm_vocab_size: 50295
+        llm_model_path: 'microsoft/phi-1_5' # for qwen3: pretrained_weight/Qwen3-0.6B-Base
+        codebook_size: 8192
+        bidirectional_imu: False
+        bidirectional_motion: True
+        base_model: "showo" # showo, gpt2-medium, or qwen3
+        add_gate: True # only used by the custom Show-o/Phi backbone
+        all_continuous_recon: False  # True: direct nn.Linear regression with L1 loss; False: discrete logits with cross-entropy
+        partial_continuous_recon: True
+
+    gradient_checkpointing: False
+    normalization_window_size: 4
+    accumulate: True # diff trajectory
+    accumulate_orient: True # diff orientation
+    accumulate_pose: False # diff pose
+    local_coordinate: False # not stable during training
+    overfit: False
+    motion_only: False
+    traj_only: False
+    text_only: False
+    predict_objects: True
+    large_totem_model: False
+    smooth_imu: False # not implemented
+    debug: False
+    dynamic_object: False
+    object_track_head: mlp
+    object_track_hidden: 256
+    object_track_velocity_weight: 0.0
+    object_track_acceleration_weight: 0.0
+    object_track_loss_scale: 200.0
+    object_track_rotation_residual: add
+    object_anchor_head: regression
+    object_anchor_flow_hidden: 512
+    object_anchor_flow_steps: 20
+    object_anchor_flow_weight: 1.0
+    object_detach_latent: false
+    object_track_root_feature: false
+    object_track_frame: world
+    object_identity_catalog_path: "dataset_process/object_identity_catalog.json"
+    identity_embedding_dim: 256
+    identity_loss_weight: 1.0
+    object_pose_loss_weight: 1.0
+    text_loss_weight: 1.0
+    use_rope_embed: False  # True: RoPE time embedding; False: sinusoidal (default)
+    modality_grad_clip: null
+    modality_grad_scale: null
+    modality_grad_stats: false
+
+dataset:
+    params:
+        train_imu_paths_or_urls: []
+        train_imu_source_weights: []
+        use_rewrite_texts: true
+        filter_short_text: false
+        require_text: false
+        train_rewrite_roots: null
+        num_workers: 4
+        pin_memory: True
+        persistent_workers: True
+        fps: 30
+
+optimizer:
+    name: adamw
+    params: # default adamw params
+        learning_rate: 1e-04
+        scale_lr: False # scale learning rate by total batch size
+        beta1: 0.9
+        beta2: 0.999
+        weight_decay: 0.01
+        epsilon: 1e-8
+
+lr_scheduler:
+    scheduler: "constant_with_warmup"
+    params:
+        learning_rate: ${optimizer.params.learning_rate}
+        warmup_steps: 1000
+
+training:
+    gradient_accumulation_steps: 3
+    batch_size_imu: 8
+    mixed_precision: "bf16"
+    enable_tf32: True
+    seed: 42
+    max_train_steps: 50000000
+    max_grad_norm: 2.0
+    cudnn_benchmark: False
+    add_imu_noise: False
+    imu_noise:
+        enabled: False
+        random_magnitude: True
+        ori_static_bias_deg: 5.0
+        yaw_drift_deg_per_min: 4.0
+        ori_jitter_deg: 1.5
+        ori_jitter_rho: 0.95
+        acc_white_std: 0.15
+        acc_bias_std: 0.2
+        gyro_white_std: 0.015
+        gyro_bias_std: 0.005
+        time_shift_sensor_frames: 1
+        time_shift_gt_frames: 1
+        heading_conjugation_prob: 0.5
+        heading_conjugation_deg: 180.0
+        lowpass_hz: [3.0, 10.0]
+        eval_lowpass_hz: 8.0
+        lowpass_order: 2
+    smooth_real_imu_acc: False
+    train_only: []
+    lora:
+        enabled: False
+        scope: showo
+        target_modules: [q_proj, k_proj, v_proj, dense, fc1, fc2]
+        r: 32
+        alpha: null
+        dropout: 0.0
+        train_norms: True
+        train_biases: False

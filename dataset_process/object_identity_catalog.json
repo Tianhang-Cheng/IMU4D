@@ -1,0 +1,1761 @@
+{
+  "schema_version": 2,
+  "identity_embedding": "learned_during_training",
+  "categories": {
+    "ball": 1,
+    "basket": 3,
+    "bed": 1,
+    "bench": 1,
+    "bottle": 1,
+    "box": 10,
+    "bucket": 1,
+    "can": 1,
+    "chair": 9,
+    "clothes_hanger": 1,
+    "clothes_rack": 4,
+    "cutting_board": 1,
+    "deep_plate": 1,
+    "draw_organizer_tray": 1,
+    "drawer": 1,
+    "floor_lamp": 2,
+    "flower": 1,
+    "fork": 1,
+    "frying_pan": 1,
+    "ground": 1,
+    "guitar": 1,
+    "hammer": 1,
+    "kitchen_counter": 2,
+    "knife": 1,
+    "laptop": 1,
+    "larger_bin": 1,
+    "lint_roller": 1,
+    "mango": 1,
+    "mixing_bowl": 1,
+    "monitor": 1,
+    "mop": 2,
+    "mug": 1,
+    "notebook": 1,
+    "orange": 1,
+    "organizer": 2,
+    "peeler": 1,
+    "pen": 1,
+    "phone": 1,
+    "plastic_bowl": 1,
+    "plastic_bowl_stacked": 1,
+    "screwdriver": 1,
+    "serving_bowl": 1,
+    "shelf": 1,
+    "shower_squeegee": 1,
+    "side_plate": 1,
+    "side_table": 2,
+    "sink": 2,
+    "soap_dispenser": 1,
+    "soccerball": 1,
+    "soup_ladle": 1,
+    "spatula": 1,
+    "spoon": 1,
+    "step_stool": 5,
+    "suitcase": 1,
+    "table": 13,
+    "table_lamp": 1,
+    "tap": 1,
+    "trash": 1,
+    "trash_can": 5,
+    "tray": 1,
+    "tripod": 1,
+    "turner": 1,
+    "ukulele": 1,
+    "usb": 1,
+    "utility_cart": 1,
+    "vacuum": 1,
+    "vacuum_flask": 1,
+    "vase": 1,
+    "wash_tub": 1,
+    "whisk": 1,
+    "wok_turner": 1
+  },
+  "category_vocabulary": [
+    "ball",
+    "basket",
+    "bed",
+    "bench",
+    "bookshelf",
+    "bottle",
+    "box",
+    "bucket",
+    "can",
+    "chair",
+    "clothes_hanger",
+    "clothes_rack",
+    "computer",
+    "cutting_board",
+    "deep_plate",
+    "desk",
+    "dishwasher",
+    "draw_organizer_tray",
+    "drawer",
+    "faucet",
+    "floor_lamp",
+    "flower",
+    "fork",
+    "fridge",
+    "frying_pan",
+    "ground",
+    "guitar",
+    "hammer",
+    "kitchen_counter",
+    "knife",
+    "laptop",
+    "larger_bin",
+    "lint_roller",
+    "mango",
+    "microwave",
+    "mixing_bowl",
+    "monitor",
+    "mop",
+    "mug",
+    "nightstand",
+    "notebook",
+    "orange",
+    "organizer",
+    "peeler",
+    "pen",
+    "phone",
+    "plastic_bowl",
+    "plastic_bowl_stacked",
+    "room",
+    "screwdriver",
+    "serving_bowl",
+    "shelf",
+    "shower_squeegee",
+    "side_plate",
+    "side_table",
+    "sink",
+    "soap_dispenser",
+    "soccerball",
+    "sofa",
+    "soup_ladle",
+    "spatula",
+    "spoon",
+    "step_stool",
+    "stove",
+    "suitcase",
+    "table",
+    "table_lamp",
+    "tap",
+    "toilet",
+    "trash",
+    "trash_can",
+    "tray",
+    "tripod",
+    "turner",
+    "ukulele",
+    "usb",
+    "utility_cart",
+    "vacuum",
+    "vacuum_flask",
+    "vase",
+    "wash_tub",
+    "whisk",
+    "wok_turner"
+  ],
+  "assets": [
+    {
+      "asset_id": "hiphi/Ball_A_1",
+      "category": "ball",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Ball_A_1.obj",
+      "extent_m": [
+        0.23880002,
+        0.2388,
+        0.23880006
+      ],
+      "asset_aliases": [
+        "hiphi/Ball_A_1",
+        "hiphi/Ball_A_2",
+        "hiphi/Ball_A_3"
+      ],
+      "asset_index": 0
+    },
+    {
+      "asset_id": "hiphi/Bench_B_1",
+      "category": "bench",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Bench_B_1.obj",
+      "extent_m": [
+        0.42641109,
+        0.5147420500000001,
+        0.60817978
+      ],
+      "asset_index": 1
+    },
+    {
+      "asset_id": "hiphi/Bottle_A_1",
+      "category": "bottle",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Bottle_A_1.obj",
+      "extent_m": [
+        0.08803090999999999,
+        0.33493145,
+        0.14648014
+      ],
+      "asset_index": 2
+    },
+    {
+      "asset_id": "hiphi/Box_A_1",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_A_1.obj",
+      "extent_m": [
+        0.43178799,
+        0.4462198,
+        0.5839626099999999
+      ],
+      "asset_index": 3
+    },
+    {
+      "asset_id": "hiphi/Box_A_2",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_A_2.obj",
+      "extent_m": [
+        0.45258171,
+        0.44502713000000005,
+        0.6034912700000001
+      ],
+      "asset_index": 4
+    },
+    {
+      "asset_id": "hiphi/Box_F_1",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_F_1.obj",
+      "extent_m": [
+        0.37087364,
+        0.34704332000000004,
+        0.37000226999999997
+      ],
+      "asset_index": 5
+    },
+    {
+      "asset_id": "hiphi/Box_H_1",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_H_1.obj",
+      "extent_m": [
+        0.30001516,
+        0.30001805000000004,
+        0.30000311
+      ],
+      "asset_index": 6
+    },
+    {
+      "asset_id": "hiphi/Box_H_2",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_H_2.obj",
+      "extent_m": [
+        0.30429194000000004,
+        0.30000000000000004,
+        0.30429195
+      ],
+      "asset_index": 7
+    },
+    {
+      "asset_id": "hiphi/Box_I_1",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_I_1.obj",
+      "extent_m": [
+        0.4,
+        0.4,
+        0.6
+      ],
+      "asset_aliases": [
+        "hiphi/Box_I_1",
+        "hiphi/Box_I_2"
+      ],
+      "asset_index": 8
+    },
+    {
+      "asset_id": "hiphi/Box_K_1",
+      "category": "box",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Box_K_1.obj",
+      "extent_m": [
+        0.485,
+        0.4,
+        0.7250000000000001
+      ],
+      "asset_index": 9
+    },
+    {
+      "asset_id": "hiphi/Bucket_B_1",
+      "category": "bucket",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Bucket_B_1.obj",
+      "extent_m": [
+        0.29188673,
+        0.29951737,
+        0.30021019
+      ],
+      "asset_index": 10
+    },
+    {
+      "asset_id": "hiphi/Chair_C_1",
+      "category": "chair",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Chair_C_1.obj",
+      "extent_m": [
+        0.60714668,
+        0.94157925,
+        0.5354907200000001
+      ],
+      "asset_index": 11
+    },
+    {
+      "asset_id": "hiphi/Chair_Q_1",
+      "category": "chair",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Chair_Q_1.obj",
+      "extent_m": [
+        0.51553238,
+        0.80463219,
+        0.55539612
+      ],
+      "asset_index": 12
+    },
+    {
+      "asset_id": "hiphi/Chair_S_1",
+      "category": "chair",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Chair_S_1.obj",
+      "extent_m": [
+        0.34215561000000005,
+        0.4692286,
+        0.35152436000000004
+      ],
+      "asset_index": 13
+    },
+    {
+      "asset_id": "hiphi/Chair_T_1",
+      "category": "chair",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Chair_T_1.obj",
+      "extent_m": [
+        0.45397412000000004,
+        0.40382667000000005,
+        0.45292403999999997
+      ],
+      "asset_index": 14
+    },
+    {
+      "asset_id": "hiphi/Clothrack_A_1",
+      "category": "clothes_rack",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Clothrack_A_1.obj",
+      "extent_m": [
+        0.80236008,
+        1.47879272,
+        0.43272461
+      ],
+      "asset_index": 15
+    },
+    {
+      "asset_id": "hiphi/Clothrack_B_1",
+      "category": "clothes_rack",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Clothrack_B_1.obj",
+      "extent_m": [
+        0.54049546,
+        1.25160522,
+        1.10650146
+      ],
+      "asset_index": 16
+    },
+    {
+      "asset_id": "hiphi/Mop_A_1",
+      "category": "mop",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Mop_A_1.obj",
+      "extent_m": [
+        0.39364715,
+        1.36807557,
+        0.09965332
+      ],
+      "asset_index": 17
+    },
+    {
+      "asset_id": "hiphi/ScoccerBall_A_1",
+      "category": "soccerball",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/ScoccerBall_A_1.obj",
+      "extent_m": [
+        0.21600003,
+        0.216,
+        0.21600006
+      ],
+      "asset_index": 18
+    },
+    {
+      "asset_id": "hiphi/StepStool_A_1",
+      "category": "step_stool",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/StepStool_A_1.obj",
+      "extent_m": [
+        0.5020373499999999,
+        0.5262777700000001,
+        0.42873779
+      ],
+      "asset_index": 19
+    },
+    {
+      "asset_id": "hiphi/StepStool_B_1",
+      "category": "step_stool",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/StepStool_B_1.obj",
+      "extent_m": [
+        0.4646459,
+        0.49131654999999996,
+        0.46571410999999996
+      ],
+      "asset_index": 20
+    },
+    {
+      "asset_id": "hiphi/StepStool_C_1",
+      "category": "step_stool",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/StepStool_C_1.obj",
+      "extent_m": [
+        0.41360558000000003,
+        0.27701754,
+        0.34745483
+      ],
+      "asset_index": 21
+    },
+    {
+      "asset_id": "hiphi/StepStool_D_1",
+      "category": "step_stool",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/StepStool_D_1.obj",
+      "extent_m": [
+        0.5298590400000001,
+        0.65568656,
+        0.47917359000000004
+      ],
+      "asset_index": 22
+    },
+    {
+      "asset_id": "hiphi/Table_A_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_1.obj",
+      "extent_m": [
+        0.61474085,
+        0.50373763,
+        0.60912929
+      ],
+      "asset_index": 23
+    },
+    {
+      "asset_id": "hiphi/Table_A_2",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_2.obj",
+      "extent_m": [
+        0.61465254,
+        0.5000481800000001,
+        0.60906382
+      ],
+      "asset_index": 24
+    },
+    {
+      "asset_id": "hiphi/Table_A_3",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_3.obj",
+      "extent_m": [
+        0.5988329400000001,
+        0.50175011,
+        0.6044888900000001
+      ],
+      "asset_index": 25
+    },
+    {
+      "asset_id": "hiphi/Table_A_4",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_4.obj",
+      "extent_m": [
+        0.6047546300000001,
+        0.5023138500000001,
+        0.59952594
+      ],
+      "asset_index": 26
+    },
+    {
+      "asset_id": "hiphi/Table_A_5",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_5.obj",
+      "extent_m": [
+        0.60086406,
+        0.50231386,
+        0.59917049
+      ],
+      "asset_index": 27
+    },
+    {
+      "asset_id": "hiphi/Table_A_6",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_A_6.obj",
+      "extent_m": [
+        0.61642833,
+        0.5023138500000001,
+        0.61458221
+      ],
+      "asset_index": 28
+    },
+    {
+      "asset_id": "hiphi/Table_B_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_B_1.obj",
+      "extent_m": [
+        0.5922937000000001,
+        0.48232925000000004,
+        0.59253167
+      ],
+      "asset_index": 29
+    },
+    {
+      "asset_id": "hiphi/Table_C_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_C_1.obj",
+      "extent_m": [
+        0.4445106200000001,
+        0.63450958,
+        0.50899047
+      ],
+      "asset_index": 30
+    },
+    {
+      "asset_id": "hiphi/Table_E_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_E_1.obj",
+      "extent_m": [
+        0.51800857,
+        0.53556366,
+        0.51713013
+      ],
+      "asset_index": 31
+    },
+    {
+      "asset_id": "hiphi/Table_G_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_G_1.obj",
+      "extent_m": [
+        0.54424499,
+        0.75234833,
+        0.5910339400000001
+      ],
+      "asset_index": 32
+    },
+    {
+      "asset_id": "hiphi/Table_J_1",
+      "category": "table",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Table_J_1.obj",
+      "extent_m": [
+        0.41282675999999996,
+        0.42274586000000003,
+        0.63379029
+      ],
+      "asset_index": 33
+    },
+    {
+      "asset_id": "hiphi/Trashbin_B_2",
+      "category": "trash_can",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Trashbin_B_2.obj",
+      "extent_m": [
+        0.25749634,
+        0.2999852,
+        0.18098847
+      ],
+      "asset_index": 34
+    },
+    {
+      "asset_id": "hiphi/Trashbin_C_1",
+      "category": "trash_can",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Trashbin_C_1.obj",
+      "extent_m": [
+        0.29404968,
+        0.48079574,
+        0.38992675
+      ],
+      "asset_index": 35
+    },
+    {
+      "asset_id": "hiphi/Trashbin_G_1",
+      "category": "trash_can",
+      "source": "hiphi",
+      "dataset": "hiphi",
+      "mesh_path": "object_meshes/Trashbin_G_1.obj",
+      "extent_m": [
+        0.45629745,
+        0.51643883,
+        0.41821030000000003
+      ],
+      "asset_index": 36
+    },
+    {
+      "asset_id": "humoto/basket",
+      "category": "basket",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/basket/basket.obj",
+      "extent_m": [
+        0.249,
+        0.1807,
+        0.257
+      ],
+      "asset_index": 37
+    },
+    {
+      "asset_id": "humoto/basket_90",
+      "category": "basket",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/basket_90/basket_90.obj",
+      "extent_m": [
+        0.242082,
+        0.2939,
+        0.257
+      ],
+      "asset_index": 38
+    },
+    {
+      "asset_id": "humoto/bathroomsink",
+      "category": "sink",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/bathroomsink/bathroomsink.obj",
+      "extent_m": [
+        1.03917,
+        0.998666,
+        0.579578
+      ],
+      "asset_index": 39
+    },
+    {
+      "asset_id": "humoto/bed",
+      "category": "bed",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/bed/bed.obj",
+      "extent_m": [
+        2.151876,
+        0.720468,
+        0.848498
+      ],
+      "asset_index": 40
+    },
+    {
+      "asset_id": "humoto/can",
+      "category": "can",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/can/can.obj",
+      "extent_m": [
+        0.066838,
+        0.123926,
+        0.066838
+      ],
+      "asset_index": 41
+    },
+    {
+      "asset_id": "humoto/clothes_hanger",
+      "category": "clothes_hanger",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/clothes_hanger/clothes_hanger.obj",
+      "extent_m": [
+        0.4348,
+        0.2271,
+        0.0139
+      ],
+      "asset_index": 42
+    },
+    {
+      "asset_id": "humoto/clothes_rack",
+      "category": "clothes_rack",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/clothes_rack/clothes_rack.obj",
+      "extent_m": [
+        1.0379,
+        1.2578,
+        0.5206
+      ],
+      "asset_index": 43
+    },
+    {
+      "asset_id": "humoto/cutting_board",
+      "category": "cutting_board",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/cutting_board/cutting_board.obj",
+      "extent_m": [
+        0.2412,
+        0.0073,
+        0.3419
+      ],
+      "asset_index": 44
+    },
+    {
+      "asset_id": "humoto/deep_plate",
+      "category": "deep_plate",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/deep_plate/deep_plate.obj",
+      "extent_m": [
+        0.200982,
+        0.0372,
+        0.200982
+      ],
+      "asset_index": 45
+    },
+    {
+      "asset_id": "humoto/dining_chair",
+      "category": "chair",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/dining_chair/dining_chair.obj",
+      "extent_m": [
+        0.4042,
+        0.95,
+        0.501358
+      ],
+      "asset_index": 46
+    },
+    {
+      "asset_id": "humoto/draw_organizer_tray",
+      "category": "draw_organizer_tray",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/draw_organizer_tray/draw_organizer_tray.obj",
+      "extent_m": [
+        0.368,
+        0.0498,
+        0.4919
+      ],
+      "asset_index": 47
+    },
+    {
+      "asset_id": "humoto/drawer",
+      "category": "drawer",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/drawer/drawer.obj",
+      "extent_m": [
+        1.094438,
+        0.13791,
+        0.61229
+      ],
+      "asset_index": 48
+    },
+    {
+      "asset_id": "humoto/floor_lamp",
+      "category": "floor_lamp",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/floor_lamp/floor_lamp.obj",
+      "extent_m": [
+        0.2787,
+        1.7797,
+        0.24
+      ],
+      "asset_index": 49
+    },
+    {
+      "asset_id": "humoto/flower",
+      "category": "flower",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/flower/flower.obj",
+      "extent_m": [
+        0.144682,
+        0.272934,
+        0.148947
+      ],
+      "asset_index": 50
+    },
+    {
+      "asset_id": "humoto/fork",
+      "category": "fork",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/fork/fork.obj",
+      "extent_m": [
+        0.0244,
+        0.0111,
+        0.1632
+      ],
+      "asset_index": 51
+    },
+    {
+      "asset_id": "humoto/frying_pan",
+      "category": "frying_pan",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/frying_pan/frying_pan.obj",
+      "extent_m": [
+        0.4904,
+        0.062,
+        0.294
+      ],
+      "asset_index": 52
+    },
+    {
+      "asset_id": "humoto/ground",
+      "category": "ground",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": null,
+      "extent_m": null,
+      "asset_index": 53
+    },
+    {
+      "asset_id": "humoto/guitar",
+      "category": "guitar",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/guitar/guitar.obj",
+      "extent_m": [
+        0.379884,
+        1.000914,
+        0.124798
+      ],
+      "asset_index": 54
+    },
+    {
+      "asset_id": "humoto/hammer",
+      "category": "hammer",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/hammer/hammer.obj",
+      "extent_m": [
+        0.11095,
+        0.254636,
+        0.025592
+      ],
+      "asset_index": 55
+    },
+    {
+      "asset_id": "humoto/kitchen_counter",
+      "category": "kitchen_counter",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/kitchen_counter/kitchen_counter.obj",
+      "extent_m": [
+        3.45908,
+        1.185536,
+        1.520384
+      ],
+      "asset_index": 56
+    },
+    {
+      "asset_id": "humoto/kitchen_counter_small",
+      "category": "kitchen_counter",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/kitchen_counter_small/kitchen_counter_small.obj",
+      "extent_m": [
+        1.227438,
+        0.927386,
+        0.6467069999999999
+      ],
+      "asset_index": 57
+    },
+    {
+      "asset_id": "humoto/knife",
+      "category": "knife",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/knife/knife.obj",
+      "extent_m": [
+        0.0234,
+        0.0118,
+        0.2345
+      ],
+      "asset_index": 58
+    },
+    {
+      "asset_id": "humoto/laptop",
+      "category": "laptop",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/laptop/laptop.obj",
+      "extent_m": [
+        0.3497,
+        0.224754,
+        0.225768
+      ],
+      "asset_index": 59
+    },
+    {
+      "asset_id": "humoto/larger_bin",
+      "category": "larger_bin",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/larger_bin/larger_bin.obj",
+      "extent_m": [
+        2.030806,
+        1.014088,
+        1.727304
+      ],
+      "asset_index": 60
+    },
+    {
+      "asset_id": "humoto/lint_roller",
+      "category": "lint_roller",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/lint_roller/lint_roller.obj",
+      "extent_m": [
+        0.05,
+        0.05,
+        0.2279
+      ],
+      "asset_index": 61
+    },
+    {
+      "asset_id": "humoto/low_chair",
+      "category": "chair",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/low_chair/low_chair.obj",
+      "extent_m": [
+        0.591534,
+        0.74201,
+        0.610628
+      ],
+      "asset_index": 62
+    },
+    {
+      "asset_id": "humoto/mango",
+      "category": "mango",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/mango/mango.obj",
+      "extent_m": [
+        0.088822,
+        0.141576,
+        0.103308
+      ],
+      "asset_index": 63
+    },
+    {
+      "asset_id": "humoto/mixing_bowl",
+      "category": "mixing_bowl",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/mixing_bowl/mixing_bowl.obj",
+      "extent_m": [
+        0.352418,
+        0.14666099999999999,
+        0.255694
+      ],
+      "asset_index": 64
+    },
+    {
+      "asset_id": "humoto/mug",
+      "category": "mug",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/mug/mug.obj",
+      "extent_m": [
+        0.119934,
+        0.0882,
+        0.090496
+      ],
+      "asset_index": 65
+    },
+    {
+      "asset_id": "humoto/notebook",
+      "category": "notebook",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/notebook/notebook.obj",
+      "extent_m": [
+        0.215618,
+        0.011624,
+        0.30398
+      ],
+      "asset_index": 66
+    },
+    {
+      "asset_id": "humoto/orange",
+      "category": "orange",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/orange/orange.obj",
+      "extent_m": [
+        0.061086,
+        0.046726,
+        0.059742
+      ],
+      "asset_index": 67
+    },
+    {
+      "asset_id": "humoto/organizer_medium",
+      "category": "organizer",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/organizer_medium/organizer_medium.obj",
+      "extent_m": [
+        0.251244,
+        0.099908,
+        0.196774
+      ],
+      "asset_index": 68
+    },
+    {
+      "asset_id": "humoto/organizer_small",
+      "category": "organizer",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/organizer_small/organizer_small.obj",
+      "extent_m": [
+        0.0984,
+        0.0491,
+        0.0984
+      ],
+      "asset_index": 69
+    },
+    {
+      "asset_id": "humoto/peeler",
+      "category": "peeler",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/peeler/peeler.obj",
+      "extent_m": [
+        0.0218,
+        0.0241,
+        0.168
+      ],
+      "asset_index": 70
+    },
+    {
+      "asset_id": "humoto/pen",
+      "category": "pen",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/pen/pen.obj",
+      "extent_m": [
+        0.15004,
+        0.013134,
+        0.010252
+      ],
+      "asset_index": 71
+    },
+    {
+      "asset_id": "humoto/phone",
+      "category": "phone",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/phone/phone.obj",
+      "extent_m": [
+        0.07537,
+        0.14867,
+        0.011598
+      ],
+      "asset_index": 72
+    },
+    {
+      "asset_id": "humoto/plastic_bowl",
+      "category": "plastic_bowl",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/plastic_bowl/plastic_bowl.obj",
+      "extent_m": [
+        0.118098,
+        0.048786,
+        0.118098
+      ],
+      "asset_index": 73
+    },
+    {
+      "asset_id": "humoto/plastic_bowl_stacked",
+      "category": "plastic_bowl_stacked",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/plastic_bowl_stacked/plastic_bowl_stacked.obj",
+      "extent_m": [
+        0.1178,
+        0.0773,
+        0.1178
+      ],
+      "asset_index": 74
+    },
+    {
+      "asset_id": "humoto/screwdriver",
+      "category": "screwdriver",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/screwdriver/screwdriver.obj",
+      "extent_m": [
+        0.178888,
+        0.030138,
+        0.030136
+      ],
+      "asset_index": 75
+    },
+    {
+      "asset_id": "humoto/serving_bowl",
+      "category": "serving_bowl",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/serving_bowl/serving_bowl.obj",
+      "extent_m": [
+        0.223584,
+        0.0739,
+        0.223584
+      ],
+      "asset_index": 76
+    },
+    {
+      "asset_id": "humoto/shelf",
+      "category": "shelf",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/shelf/shelf.obj",
+      "extent_m": [
+        0.694,
+        1.6135,
+        0.3454
+      ],
+      "asset_index": 77
+    },
+    {
+      "asset_id": "humoto/shower_squeegee",
+      "category": "shower_squeegee",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/shower_squeegee/shower_squeegee.obj",
+      "extent_m": [
+        0.2518,
+        0.0386,
+        0.2011
+      ],
+      "asset_index": 78
+    },
+    {
+      "asset_id": "humoto/side_plate",
+      "category": "side_plate",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/side_plate/side_plate.obj",
+      "extent_m": [
+        0.186408,
+        0.022412,
+        0.186408
+      ],
+      "asset_index": 79
+    },
+    {
+      "asset_id": "humoto/side_table",
+      "category": "side_table",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/side_table/side_table.obj",
+      "extent_m": [
+        0.391508,
+        0.775956,
+        0.391508
+      ],
+      "asset_index": 80
+    },
+    {
+      "asset_id": "humoto/sink",
+      "category": "sink",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/sink/sink.obj",
+      "extent_m": [
+        1.523602,
+        1.137382,
+        0.80797
+      ],
+      "asset_index": 81
+    },
+    {
+      "asset_id": "humoto/soap_dispenser",
+      "category": "soap_dispenser",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/soap_dispenser/soap_dispenser.obj",
+      "extent_m": [
+        0.0782,
+        0.1692,
+        0.06
+      ],
+      "asset_index": 82
+    },
+    {
+      "asset_id": "humoto/soup_ladle",
+      "category": "soup_ladle",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/soup_ladle/soup_ladle.obj",
+      "extent_m": [
+        0.0928,
+        0.34,
+        0.0938
+      ],
+      "asset_index": 83
+    },
+    {
+      "asset_id": "humoto/spatula",
+      "category": "spatula",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/spatula/spatula.obj",
+      "extent_m": [
+        0.0446,
+        0.2539,
+        0.0095
+      ],
+      "asset_index": 84
+    },
+    {
+      "asset_id": "humoto/spoon",
+      "category": "spoon",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/spoon/spoon.obj",
+      "extent_m": [
+        0.0376,
+        0.0155,
+        0.1637
+      ],
+      "asset_index": 85
+    },
+    {
+      "asset_id": "humoto/step_stool",
+      "category": "step_stool",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/step_stool/step_stool.obj",
+      "extent_m": [
+        0.4348,
+        0.2453,
+        0.3454
+      ],
+      "asset_index": 86
+    },
+    {
+      "asset_id": "humoto/table",
+      "category": "table",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/table/table.obj",
+      "extent_m": [
+        1.1978,
+        0.7281,
+        0.7661
+      ],
+      "asset_index": 87
+    },
+    {
+      "asset_id": "humoto/table_lamp",
+      "category": "table_lamp",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/table_lamp/table_lamp.obj",
+      "extent_m": [
+        0.213192,
+        0.3584,
+        0.231086
+      ],
+      "asset_index": 88
+    },
+    {
+      "asset_id": "humoto/tap",
+      "category": "tap",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/tap/tap.obj",
+      "extent_m": [
+        0.202624,
+        0.926642,
+        0.230902
+      ],
+      "asset_index": 89
+    },
+    {
+      "asset_id": "humoto/trash",
+      "category": "trash",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/trash/trash.obj",
+      "extent_m": [
+        0.083094,
+        0.08388,
+        0.085154
+      ],
+      "asset_index": 90
+    },
+    {
+      "asset_id": "humoto/trash_can",
+      "category": "trash_can",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/trash_can/trash_can.obj",
+      "extent_m": [
+        0.2754,
+        0.274,
+        0.2756
+      ],
+      "asset_index": 91
+    },
+    {
+      "asset_id": "humoto/tray",
+      "category": "tray",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/tray/tray.obj",
+      "extent_m": [
+        0.4967,
+        0.0491,
+        0.2896
+      ],
+      "asset_index": 92
+    },
+    {
+      "asset_id": "humoto/turner",
+      "category": "turner",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/turner/turner.obj",
+      "extent_m": [
+        0.0682,
+        0.3134,
+        0.0375
+      ],
+      "asset_index": 93
+    },
+    {
+      "asset_id": "humoto/ukelele",
+      "category": "ukulele",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/ukelele/ukelele.obj",
+      "extent_m": [
+        0.16912,
+        0.544754,
+        0.059212
+      ],
+      "asset_index": 94
+    },
+    {
+      "asset_id": "humoto/usb",
+      "category": "usb",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/usb/usb.obj",
+      "extent_m": [
+        0.019802,
+        0.008632,
+        0.058862
+      ],
+      "asset_index": 95
+    },
+    {
+      "asset_id": "humoto/utility_cart",
+      "category": "utility_cart",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/utility_cart/utility_cart.obj",
+      "extent_m": [
+        0.5405,
+        0.8322,
+        0.3057
+      ],
+      "asset_index": 96
+    },
+    {
+      "asset_id": "humoto/vacuum_flask",
+      "category": "vacuum_flask",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/vacuum_flask/vacuum_flask.obj",
+      "extent_m": [
+        0.1282,
+        0.2242,
+        0.168
+      ],
+      "asset_index": 97
+    },
+    {
+      "asset_id": "humoto/vase",
+      "category": "vase",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/vase/vase.obj",
+      "extent_m": [
+        0.155288,
+        0.215782,
+        0.154898
+      ],
+      "asset_index": 98
+    },
+    {
+      "asset_id": "humoto/wash_tub",
+      "category": "wash_tub",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/wash_tub/wash_tub.obj",
+      "extent_m": [
+        0.2955,
+        0.1131,
+        0.2701
+      ],
+      "asset_index": 99
+    },
+    {
+      "asset_id": "humoto/whisk",
+      "category": "whisk",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/whisk/whisk.obj",
+      "extent_m": [
+        0.0747,
+        0.3402,
+        0.0749
+      ],
+      "asset_index": 100
+    },
+    {
+      "asset_id": "humoto/wok_turner",
+      "category": "wok_turner",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/wok_turner/wok_turner.obj",
+      "extent_m": [
+        0.090094,
+        0.310796,
+        0.018864
+      ],
+      "asset_index": 101
+    },
+    {
+      "asset_id": "humoto/working_chair",
+      "category": "chair",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/working_chair/working_chair.obj",
+      "extent_m": [
+        0.4492,
+        0.766022,
+        0.450142
+      ],
+      "asset_index": 102
+    },
+    {
+      "asset_id": "humoto/woven_basket",
+      "category": "basket",
+      "source": "humoto",
+      "dataset": "humoto",
+      "mesh_path": "humoto_objects_0805/woven_basket/woven_basket.obj",
+      "extent_m": [
+        0.5347,
+        0.3844,
+        0.5106
+      ],
+      "asset_index": 103
+    },
+    {
+      "asset_id": "omomo/clothesstand",
+      "category": "clothes_rack",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/clothesstand_cleaned_simplified.obj",
+      "extent_m": [
+        1.2265562053434997,
+        1.497737275668338,
+        0.5269593923904746
+      ],
+      "source_category": "clothesstand",
+      "part": "whole",
+      "reference_scale": 0.2745881602168083,
+      "asset_index": 104
+    },
+    {
+      "asset_id": "omomo/floorlamp",
+      "category": "floor_lamp",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/floorlamp_cleaned_simplified.obj",
+      "extent_m": [
+        1.7159274567863345,
+        0.7801991995020211,
+        0.5353655940742418
+      ],
+      "source_category": "floorlamp",
+      "part": "whole",
+      "reference_scale": 0.37936877459287643,
+      "asset_index": 105
+    },
+    {
+      "asset_id": "omomo/largebox",
+      "category": "box",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/largebox_cleaned_simplified.obj",
+      "extent_m": [
+        0.47038059072378274,
+        0.45797690922114254,
+        0.4072257311999798
+      ],
+      "source_category": "largebox",
+      "part": "whole",
+      "reference_scale": 0.34871187806129456,
+      "asset_index": 106
+    },
+    {
+      "asset_id": "omomo/largetable",
+      "category": "table",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/largetable_cleaned_simplified.obj",
+      "extent_m": [
+        0.5598786464852523,
+        0.45909918748580475,
+        0.5598787240536586
+      ],
+      "source_category": "largetable",
+      "part": "whole",
+      "reference_scale": 0.02585613541305065,
+      "asset_index": 107
+    },
+    {
+      "asset_id": "omomo/monitor",
+      "category": "monitor",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/monitor_cleaned_simplified.obj",
+      "extent_m": [
+        0.5621095453552901,
+        0.4658521333667636,
+        0.16798305525510016
+      ],
+      "source_category": "monitor",
+      "part": "whole",
+      "reference_scale": 0.15825824439525604,
+      "asset_index": 108
+    },
+    {
+      "asset_id": "omomo/mop",
+      "category": "mop",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/mop_cleaned_simplified.obj",
+      "extent_m": [
+        0.8482773192794322,
+        1.0125604310163707,
+        0.7218432815667092
+      ],
+      "source_category": "mop",
+      "part": "whole",
+      "reference_scale": 0.16722442209720612,
+      "asset_index": 109
+    },
+    {
+      "asset_id": "omomo/plasticbox",
+      "category": "box",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/plasticbox_cleaned_simplified.obj",
+      "extent_m": [
+        0.5554627679798305,
+        0.2782330715271905,
+        0.3855362602118477
+      ],
+      "source_category": "plasticbox",
+      "part": "whole",
+      "reference_scale": 0.025237061083316803,
+      "asset_index": 110
+    },
+    {
+      "asset_id": "omomo/smallbox",
+      "category": "box",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/smallbox_cleaned_simplified.obj",
+      "extent_m": [
+        0.38613020344658194,
+        0.43724949716116485,
+        0.23604504664570095
+      ],
+      "source_category": "smallbox",
+      "part": "whole",
+      "reference_scale": 0.3145338147878647,
+      "asset_index": 111
+    },
+    {
+      "asset_id": "omomo/smalltable",
+      "category": "side_table",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/smalltable_cleaned_simplified.obj",
+      "extent_m": [
+        0.354086723003123,
+        0.3495236829477828,
+        0.3670543102137856
+      ],
+      "source_category": "smalltable",
+      "part": "whole",
+      "reference_scale": 0.016265029087662697,
+      "asset_index": 112
+    },
+    {
+      "asset_id": "omomo/suitcase",
+      "category": "suitcase",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/suitcase_cleaned_simplified.obj",
+      "extent_m": [
+        0.40981720450690384,
+        0.5313757661567927,
+        0.4131771114580035
+      ],
+      "source_category": "suitcase",
+      "part": "whole",
+      "reference_scale": 0.36724308133125305,
+      "asset_index": 113
+    },
+    {
+      "asset_id": "omomo/trashcan",
+      "category": "trash_can",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/trashcan_cleaned_simplified.obj",
+      "extent_m": [
+        0.3261178406061642,
+        0.3681544605806507,
+        0.30535410057326406
+      ],
+      "source_category": "trashcan",
+      "part": "whole",
+      "reference_scale": 0.23269648477435112,
+      "asset_index": 114
+    },
+    {
+      "asset_id": "omomo/tripod",
+      "category": "tripod",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/tripod_cleaned_simplified.obj",
+      "extent_m": [
+        1.2976156182179228,
+        1.1636043592298404,
+        0.3075265118218064
+      ],
+      "source_category": "tripod",
+      "part": "whole",
+      "reference_scale": 0.22387447208166122,
+      "asset_index": 115
+    },
+    {
+      "asset_id": "omomo/vacuum",
+      "category": "vacuum",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/vacuum_cleaned_simplified.obj",
+      "extent_m": [
+        1.0525053746914566,
+        0.5243655443927049,
+        0.5901079644122422
+      ],
+      "source_category": "vacuum",
+      "part": "whole",
+      "reference_scale": 0.19146177172660828,
+      "asset_index": 116
+    },
+    {
+      "asset_id": "omomo/whitechair",
+      "category": "chair",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/whitechair_cleaned_simplified.obj",
+      "extent_m": [
+        0.9244371841134132,
+        0.6833868928491175,
+        0.8156248039509355
+      ],
+      "source_category": "whitechair",
+      "part": "whole",
+      "reference_scale": 0.31307509541511536,
+      "asset_index": 117
+    },
+    {
+      "asset_id": "omomo/woodchair",
+      "category": "chair",
+      "source": "omomo",
+      "dataset": "omomo",
+      "mesh_path": "captured_objects/woodchair_cleaned_simplified.obj",
+      "extent_m": [
+        0.6400808324130903,
+        0.6265833981698937,
+        0.8789994355532136
+      ],
+      "source_category": "woodchair",
+      "part": "whole",
+      "reference_scale": 0.024897043593227863,
+      "asset_index": 118
+    }
+  ]
+}

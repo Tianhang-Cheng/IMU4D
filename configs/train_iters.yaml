@@ -1,0 +1,15 @@
+# Absolute optimizer-step targets for the public training scripts.
+joint:
+    pretrain: 500000
+    noise: 24000
+    finetune:
+        scene:
+            init_from: pretrain
+            hiphi: 2500
+            omomo: 1000
+            humoto: 500
+        real:
+            init_from: noise
+            imuposer: 1000
+            dipimu: 2000
+            ncsa: 2000

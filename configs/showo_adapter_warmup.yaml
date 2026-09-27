@@ -1,0 +1,39 @@
+base_config: showo_base.yaml
+
+launcher:
+    lifecycle: new_or_resume
+    init_checkpoint: null
+    required_files:
+        - "pretrained_weight/showo/pytorch_model.safetensors"
+
+experiment:
+    name: showo_adapter_warmup
+    output_dir: "${oc.env:ADAPTER_WARMUP_DIR,exp/showo_adapter_warmup}"
+    full_eval_every: 0
+
+model:
+    showo:
+        load_from_showo: true
+
+training:
+    max_train_steps: 1000
+    train_only:
+        - embed_tokens
+        - lm_head
+        - imu_aggregator
+        - status_aggregator
+        - status_learnable_embeddings
+        - mean_head
+        - std_head
+        - value_head
+        - motion_head
+        - motion_refine
+        - pose_head
+        - pose_refine
+        - pose_mean_head
+        - pose_std_head
+        - pose_value_head
+        - object_aggregator
+        - object_mean_head
+        - object_dynamic_mean_head
+        - identity_head

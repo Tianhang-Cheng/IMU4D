@@ -1,0 +1,19 @@
+base_config: showo_finetune_scene_base.yaml
+
+experiment:
+    name: showo_finetune_humoto
+    output_dir: "${oc.env:FULL_DIR,exp/showo_finetune_humoto}"
+    train_selected_dataset: HUMOTO
+    eval_selected_dataset: HUMOTO
+    full_eval_datasets:
+        - {name: HUMOTO, root: "${oc.env:HUMOTO_ROOT,data/processed/humoto/v1}", sample_num: null}
+
+dataset:
+    params:
+        imu_path_or_url: "${oc.env:HUMOTO_ROOT,data/processed/humoto/v1}"
+        train_imu_paths_or_urls:
+            - "${oc.env:HUMOTO_ROOT,data/processed/humoto/v1}"
+        train_imu_source_weights: []
+
+training:
+    max_train_steps: 1000

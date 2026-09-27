@@ -27,8 +27,17 @@ class UniversalPrompting():
         self.text_tokenizer.add_tokens(list(special_tokens))
         self.sptids_dict = {token: torch.tensor(self.text_tokenizer.convert_tokens_to_ids([token])) for token in
                             special_tokens}
-        self.sptids_dict['<|sot|>'] = torch.tensor([self.text_tokenizer.bos_token_id])
-        self.sptids_dict['<|eot|>'] = torch.tensor([self.text_tokenizer.eos_token_id])
+        eos_token_id = self.text_tokenizer.eos_token_id
+        if eos_token_id is None:
+            raise ValueError("The text tokenizer must define an EOS token")
+        # Qwen3-Base intentionally has no BOS token. The original Phi tokenizer
+        # uses the same token for BOS/EOS, so use EOS as the compatible start
+        # marker when BOS is absent.
+        bos_token_id = self.text_tokenizer.bos_token_id
+        if bos_token_id is None:
+            bos_token_id = eos_token_id
+        self.sptids_dict['<|sot|>'] = torch.tensor([bos_token_id])
+        self.sptids_dict['<|eot|>'] = torch.tensor([eos_token_id])
         self.sptids_dict['<|pad|>'] = torch.tensor([self.text_tokenizer.pad_token_id])
         # plus 1 because at this time we add a task token before
         self.max_text_len = max_text_len + 1

@@ -1,0 +1,95 @@
+base_config: defaults.yaml
+
+launcher:
+    lifecycle: init_or_resume
+    init_checkpoint: null
+    required_files: []
+    required_globs:
+        - "${oc.env:MOTIONMILLION_REWRITE_ROOT,data/processed/motionmillion/qwen3_0.6B_rewrite_v1}/train/*.jsonl"
+        - "${oc.env:HIPHI_REWRITE_ROOT,data/processed/hiphi/qwen3_0.6B_rewrite_v1}/train/*.jsonl"
+        - "${oc.env:OMOMO_REWRITE_ROOT,data/processed/omomo/qwen3_0.6B_rewrite_v1}/train/*.jsonl"
+        - "${oc.env:HUMOTO_REWRITE_ROOT,data/processed/humoto/qwen3_0.6B_rewrite_v1}/train/*.jsonl"
+
+experiment:
+    project: imu4d_release
+    train_selected_dataset: null
+    strict_resume: false
+    reset_object_modules_on_weight_load: false
+    max_object_id_tokens: 10
+    train_imu_layout_sampling:
+        enabled: true
+    eval_imu_configs:
+        - {name: 3pt_lhip_lear_lelbow, active_imu_id: [0, 2, 4]}
+        - {name: 3pt_rhip_lear_relbow, active_imu_id: [1, 2, 5]}
+        - {name: 5pt_full, active_imu_id: [0, 1, 2, 4, 5]}
+    full_eval_every: 50000
+    eval_every: 1000
+    sample_every: 1000
+    full_eval_frames: [60, 480]
+    full_eval_datasets:
+        - {name: LINGO, root: "${oc.env:MOTIONMILLION_ROOT,data/processed/motionmillion/v1}", sample_num: 1945}
+        - {name: HiPHI, root: "${oc.env:HIPHI_ROOT,data/processed/hiphi/v1}", sample_num: null}
+        - {name: OMOMO, root: "${oc.env:OMOMO_ROOT,data/processed/omomo/v1}", sample_num: null}
+        - {name: HUMOTO, root: "${oc.env:HUMOTO_ROOT,data/processed/humoto/v1}", sample_num: null}
+    full_eval_rerun:
+        enabled: false
+        prediction_layout: 5pt_full
+        record_fps: 10
+        max_seconds: 20
+        fail_on_error: false
+        smplx_model: "${oc.env:SMPLX_MODEL,data/models/smplx/SMPLX_NEUTRAL.npz}"
+        asset_roots:
+            omomo: "${oc.env:OMOMO_ASSET_ROOT,data/raw/omomo/release_v1/data}"
+            hiphi: "${oc.env:HIPHI_ASSET_ROOT,data/raw/hiphi/release_v1}"
+            humoto: "${oc.env:HUMOTO_ASSET_ROOT,data/raw/humoto/v1}"
+        samples:
+            OMOMO: OMOMO/sub16_clothesstand_000
+            HiPHI: HiPHI/Adjusting-adjust_0006
+            HUMOTO: HUMOTO/0000683
+
+model:
+    showo:
+        base_model: showo
+        load_from_showo: false
+
+    dynamic_object: true
+    object_track_head: conv
+    object_track_hidden: 256
+    object_track_velocity_weight: 2.0
+    object_track_acceleration_weight: 2.0
+    object_track_loss_scale: 50.0
+    object_track_rotation_residual: compose
+    object_anchor_head: flow
+    object_anchor_flow_hidden: 512
+    object_anchor_flow_steps: 20
+    object_anchor_flow_weight: 1.0
+    object_track_root_feature: true
+    object_track_frame: body
+    object_track_state_head: true
+    object_track_state_weight: 5.0
+    object_track_state_speed_threshold: 0.05
+    object_track_state_angular_threshold: 5.0
+    object_track_state_filter: 5
+    object_track_state_min_run: 6
+    object_track_fps: 30.0
+    object_detach_latent: true
+
+dataset:
+    params:
+        imu_path_or_url: "${oc.env:MOTIONMILLION_ROOT,data/processed/motionmillion/v1}"
+        train_imu_paths_or_urls:
+            - "${oc.env:MOTIONMILLION_ROOT,data/processed/motionmillion/v1}"
+            - "${oc.env:HIPHI_ROOT,data/processed/hiphi/v1}"
+            - "${oc.env:OMOMO_ROOT,data/processed/omomo/v1}"
+            - "${oc.env:HUMOTO_ROOT,data/processed/humoto/v1}"
+        train_imu_source_weights: []
+        use_rewrite_texts: true
+        train_rewrite_roots:
+            - "${oc.env:MOTIONMILLION_REWRITE_ROOT,data/processed/motionmillion/qwen3_0.6B_rewrite_v1}"
+            - "${oc.env:HIPHI_REWRITE_ROOT,data/processed/hiphi/qwen3_0.6B_rewrite_v1}"
+            - "${oc.env:OMOMO_REWRITE_ROOT,data/processed/omomo/qwen3_0.6B_rewrite_v1}"
+            - "${oc.env:HUMOTO_REWRITE_ROOT,data/processed/humoto/qwen3_0.6B_rewrite_v1}"
+
+training:
+    max_train_steps: 100000
+    train_only: []

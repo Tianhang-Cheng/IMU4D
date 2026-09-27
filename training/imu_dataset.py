@@ -1,6 +1,8 @@
 from typing import Any, Callable, Optional
 
 import numpy as np
+from dataset_process.asset_frames import asset_key, canonicalize_track
+from dataset_process.ground_plane import resolve_ground_plane
 import pickle
 from scipy.spatial.transform import Rotation as R
 import torch
@@ -59,11 +61,12 @@ def intersecting_indices(intervals, A, B, *, inclusive=False):
     return list(range(left, right + 1)) if left <= right else []
 
 def random_contiguous_subarray_bounds(N, A):
+    """Return Python slice bounds [start, end) for A frames (or all N if shorter)."""
     return _random_contiguous_subarray_bounds(N, A, A)
 
 def _random_contiguous_subarray_bounds(N: int, A: int, B: int, *, rng: random.Random | None = None) -> Tuple[int, int]:
     """
-    Return (start_idx, end_idx) inclusive for a random contiguous subarray.
+    Return (start_idx, end_idx) with an exclusive end for a random subarray.
 
     - N: sequence length
     - A, B: integer length bounds (inclusive)
@@ -78,7 +81,7 @@ def _random_contiguous_subarray_bounds(N: int, A: int, B: int, *, rng: random.Ra
 
     # if sequence too short, return the full range
     if N < A:
-        return 0, N - 1
+        return 0, N
 
     # clamp B to at most N
     B = min(B, N)
@@ -86,13 +89,44 @@ def _random_contiguous_subarray_bounds(N: int, A: int, B: int, *, rng: random.Ra
     r = rng if rng is not None else random
     M = r.randint(A, B)
     start = r.randint(0, N - M)
-    end = start + M - 1
+    end = start + M
     return start, end
 
 # sys.path.append('/scratch/benk/tcheng1/code/imu-human-mllm/')
 from imu_synthesis.get_imu_readings import simulate_imu_readings
+from imu_synthesis.imu_noise import (
+    crop_margin,
+    resolve_imu_noise_cfg,
+    sample_time_shifts,
+    simulate_noisy_imu_readings,
+)
 from imu_synthesis.utils.rotation import convert_rotation
 from dataset_process.motionmillion_and_lingo.convert_lingo_dataset import align_poses_to_first_frame
+
+# Eval-only virtual-IMU replacement (evaluation/imu_body_shape.py): a pickle
+# {"imu_traj": {sample_id: [T, 6, 6]}} re-simulated on another body shape.
+# Passed by environment so forked loader workers see it; unset = off.
+ENV_EVAL_IMU_TRAJ = "IMU4D_EVAL_IMU_TRAJ"
+_EVAL_IMU_TRAJ = None
+
+
+def _eval_imu_traj_override(sample, split):
+    global _EVAL_IMU_TRAJ
+    path = os.environ.get(ENV_EVAL_IMU_TRAJ, "").strip()
+    if not path:
+        return sample['imu_traj']
+    if split == 'train':
+        raise ValueError(f"{ENV_EVAL_IMU_TRAJ} is evaluation-only")
+    if _EVAL_IMU_TRAJ is None:
+        with open(path, 'rb') as f:
+            _EVAL_IMU_TRAJ = pickle.load(f)['imu_traj']
+    sid = sample.get('id')
+    if sid not in _EVAL_IMU_TRAJ:
+        raise KeyError(f"{ENV_EVAL_IMU_TRAJ}: no imu_traj for sample {sid!r} in {path}")
+    traj = _EVAL_IMU_TRAJ[sid]
+    if traj.shape != sample['imu_traj'].shape:
+        raise ValueError(f"{ENV_EVAL_IMU_TRAJ}: {sid!r} has {traj.shape}, sample has {sample['imu_traj'].shape}")
+    return traj
 
 def align_translation(inv_rotation, inv_translation, translation):
     aligned_transl = (inv_rotation @ (translation + inv_translation).T).T  # Apply inverse rotation and translation
@@ -133,6 +167,149 @@ def add_velocity_scaled_noise(x, eps=0.01):
         noise = np.random.randn(*x.shape)
         noise = np.clip(noise, -1, 1)
         return x + eps * vel * noise
+
+
+def _yaw_rot_matrix_y(phi_deg: float) -> np.ndarray:
+    """3x3 rotation about the world vertical (+Y axis) by ``phi_deg`` degrees."""
+    a = np.deg2rad(float(phi_deg))
+    c, s = np.cos(a), np.sin(a)
+    return np.asarray([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], dtype=np.float32)
+
+
+def _rot_vec3_y(v: np.ndarray, Ry: np.ndarray) -> np.ndarray:
+    """Premultiply world-frame 3-vectors (last dim == 3) by Ry."""
+    return np.einsum("ij,...j->...i", Ry, v, optimize=True)
+
+
+def _rot_rot_rep_y(x: np.ndarray, rep: str, Ry: np.ndarray) -> np.ndarray:
+    """Rotate a world-frame orientation stored as aa(3) / 6d(6) / flat-9 about +Y.
+
+    ``Ry`` premultiplies world coordinates, matching how ``align_poses_to_first_frame``
+    and the IMU simulation rotate orientation matrices in this pipeline. ``rep`` is one
+    of "aa", "6d", "mat9" (``mat9`` = 3x3 matrix flattened to 9).
+    """
+    if rep == "mat9":
+        m = x.reshape(*x.shape[:-1], 3, 3)
+        m = np.einsum("ij,...jk->...ik", Ry, m, optimize=True)
+        return m.reshape(*x.shape[:-1], 9).astype(x.dtype)
+    t = torch.from_numpy(np.ascontiguousarray(x, dtype=np.float32))
+    mat = convert_rotation(t, rep, "mat")
+    mat = torch.einsum("ij,...jk->...ik", torch.as_tensor(Ry), mat)
+    out = convert_rotation(mat, "mat", rep)
+    return out.numpy().astype(x.dtype)
+
+
+def _rotate_imu_data_y(imu_data: "torch.Tensor", Ry: np.ndarray) -> "torch.Tensor":
+    """Rotate the canonical IMU channels [a, w, R(9)] about +Y by Ry."""
+    x = imu_data.numpy()
+    xc = x.copy()
+    xc[..., :3] = _rot_vec3_y(x[..., :3], Ry)
+    xc[..., 3:6] = _rot_vec3_y(x[..., 3:6], Ry)
+    xc[..., 6:15] = _rot_rot_rep_y(x[..., 6:15], "mat9", Ry)
+    return torch.from_numpy(xc).float()
+
+
+DEFAULT_REAL_HEADING_AUG: dict = {
+    "enabled": False,
+    # Probability that a given physical device is conjugated, and the range of
+    # the angle (uniform in +-deg).  Same semantics as
+    # ``training.imu_noise.heading_conjugation_*`` on the synthetic side.
+    "prob": 0.5,
+    "deg": 180.0,
+    # Which samples the conjugation may touch:
+    #   "all"                  historical behaviour, every real-IMU sample.
+    #   "unsupervised_orient"  only samples whose world heading / trajectory
+    #                          label is masked anyway (``motion_supervise``).
+    # The augmentation randomises the world frame each *device* reports in, so
+    # on a sample whose orient/traj label IS supervised it feeds the model an
+    # input whose heading no longer matches the target it is asked to predict.
+    # That was invisible while NCSA was scored by root-relative MPJPE (which
+    # zeroes the root orientation) and only became measurable with the
+    # meeting-room global metrics -- see README_ncsa_imu.md.
+    "scope": "all",
+}
+REAL_HEADING_AUG_SCOPES = ("all", "unsupervised_orient")
+
+
+def _device_slot_groups(sample: dict, num_sensors: int) -> list[list[int]]:
+    """Model slots grouped by the physical device that produced them.
+
+    Real captures duplicate one device into two slots (the head/earbud is copied
+    to both ear slots, ``imu_duplicated_sensor_slot``), and a heading error is a
+    property of the *device*: giving the two copies different angles would be
+    physically impossible and teaches the model an inconsistency.  All three real
+    datasets carry ``imu_source_devices``; without it every slot is its own group.
+    """
+    devices = sample.get('imu_source_devices')
+    if not devices:
+        return [[slot] for slot in range(num_sensors)]
+    groups: dict[str, list[int]] = {}
+    for slot, device in enumerate(devices[:num_sensors]):
+        if str(device) == 'missing':
+            continue
+        groups.setdefault(str(device), []).append(slot)
+    return list(groups.values())
+
+
+def apply_real_heading_aug(a_sim: np.ndarray, w_sim: np.ndarray, R_sim: np.ndarray,
+                           sample: dict, cfg: dict, motion_supervise: dict | None = None) -> np.ndarray:
+    """Random per-device heading conjugation of measured readings (in place-ish).
+
+    A device whose arbitrary yaw reference was calibrated away on the *sensor*
+    side reports ``Y(t) R Y(-t)`` / ``Y(t) a`` with an unknown ``t`` (see
+    ``dataset_process/ncsa/README_ncsa_imu.md``).  Without this augmentation the
+    real-IMU fine-tune sees each training session's own fixed ``t`` over and over
+    and can memorise it per session, which is why an oracle-calibrated fine-tune
+    beats the uncalibrated one by ~8 mm and why a model fine-tuned on
+    uncalibrated data degrades when it is later given calibrated input.
+    Randomising ``t`` per device makes the heading something the model has to
+    infer from motion consistency instead.  Returns the sampled angles (deg).
+
+    ``motion_supervise`` is the sample's resolved label-trust flag; with
+    ``cfg["scope"] == "unsupervised_orient"`` the conjugation is skipped for
+    samples whose world heading / trajectory is actually supervised, because
+    there the randomised input no longer matches the unchanged label.
+    """
+    prob = float(cfg.get("prob", 0.5))
+    deg = float(cfg.get("deg", 180.0))
+    scope = str(cfg.get("scope", "all"))
+    if scope not in REAL_HEADING_AUG_SCOPES:
+        raise ValueError(f"real_imu_heading_aug.scope must be one of {REAL_HEADING_AUG_SCOPES}, got {scope!r}")
+    angles = np.zeros(a_sim.shape[1], dtype=np.float32)
+    if prob <= 0.0 or deg == 0.0:
+        return angles
+    if scope == "unsupervised_orient":
+        supervise = motion_supervise or {}
+        if bool(supervise.get("orient", True)) or bool(supervise.get("traj", True)):
+            return angles
+    for slots in _device_slot_groups(sample, a_sim.shape[1]):
+        if random.random() >= prob:
+            continue
+        theta = random.uniform(-deg, deg)
+        Ry = _yaw_rot_matrix_y(theta)
+        for slot in slots:
+            angles[slot] = theta
+            a_sim[:, slot] = _rot_vec3_y(a_sim[:, slot], Ry)
+            w_sim[:, slot] = _rot_vec3_y(w_sim[:, slot], Ry)
+            R_sim[:, slot] = np.einsum('ij,njk,lk->nil', Ry, R_sim[:, slot], Ry)
+    return angles
+
+
+def _yaw_aug_enabled(yaw_aug) -> bool:
+    """Resolve the train-time yaw augmentation switch (default OFF; opt in per stage).
+
+    Either an explicit ``yaw_aug`` argument (``True`` enables), or the
+    ``IMU4D_YAW_AUG`` environment flag (``1``/``true`` enables). Unset means OFF:
+    the random world heading is a stage-2 (device-realism) ingredient, so stage 1
+    trains on the GT-pelvis canonical heading and only the stage-2 scripts export
+    the flag. Only synthetic WDS training flows through ``process_imu_data`` with
+    ``split == 'train'``, so this never touches evaluation. Note: the flag/param
+    is read inside data workers, so a running training keeps its launch-time
+    setting until restarted.
+    """
+    if yaw_aug is not None:
+        return bool(yaw_aug)
+    return os.environ.get("IMU4D_YAW_AUG", "0") in ("1", "true", "True")
 
 
 def get_angular_velocity(R_sim: np.ndarray, fps: float) -> np.ndarray:
@@ -191,32 +368,134 @@ def get_angular_velocity(R_sim: np.ndarray, fps: float) -> np.ndarray:
 
     return w
 
-def process_imuposer_data(sample, random_cut, random_mask_text, cut_length, shift=0, 
-                        filter_short_text=True, add_ground_data=False, rot_rep='6d', split=None,
-                        data_source=None, dynamic_object=False, fps=30, sample_idx=None, IMUSEQMAXLEN=1e6,
-                        smooth_imu_acc=True):
+REAL_IMU_SOURCES = ('imuposer', 'dipimu', 'ncsa')
+REAL_IMU_GRAVITY = np.array((0, -9.8, 0), dtype=np.float32)
 
-    n_time = min(len(sample['motion_smpl']), len(sample['imu_data']))
+
+def _real_imu_object_targets(objects, inv_rotation, inv_translation, start_cut_idx, end_cut_idx,
+                             dynamic_object, data_source, object_metadata=None, source=None):
+    """Object annotations -> {'rot', 'transl', 'bbox'} targets (same rules as process_imu_data).
+
+    Real-world samples only carry the synthetic ground plane, but the helper
+    accepts the generic ``[D]`` / ``[T, D]`` layouts so mixed batches stay uniform.
+    """
+    n_frames = end_cut_idx - start_cut_idx
+    obj_pose_dict = {}
+    for obj in objects.keys():
+        obj_name_filtered = obj.split('.')[0]  # remove the suffix
+        assert obj == obj_name_filtered
+        obj_track = np.asarray(objects[obj])
+        if source is not None and obj != 'ground':
+            # Per-asset upright frame (dataset_process/asset_canonical_frames.json);
+            # identity for assets without an entry. World geometry is unchanged.
+            obj_track = canonicalize_track(
+                obj_track, asset_key(source, obj, (object_metadata or {}).get(obj))
+            )
+        if dynamic_object:
+            if obj_track.ndim == 1:
+                obj_track = np.repeat(obj_track[None], n_frames, axis=0)
+            elif obj_track.ndim == 2:
+                obj_track = obj_track[start_cut_idx:end_cut_idx]
+            else:
+                raise ValueError(f"Object {obj!r} must have shape [D] or [T,D], got {obj_track.shape}")
+            if len(obj_track) != n_frames:
+                raise ValueError(f"Object/body crop mismatch for {obj!r}: {len(obj_track)} != {n_frames}")
+            obj_quat = obj_track[:, 0:4].copy().astype(np.float32)
+            obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy()  # [t,3,3]
+            obj_mat = np.einsum('ij,tjk->tik', inv_rotation, obj_mat)
+            obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy()  # [t,6]
+            obj_transl = obj_track[:, 4:7].copy()
+            obj_transl = np.einsum('ij,tj->ti', inv_rotation, obj_transl + inv_translation)
+            obj_bbox = (
+                obj_track[:, 7:10].copy().astype(np.float32)
+                if obj_track.shape[1] >= 10
+                else np.ones((n_frames, 3), dtype=np.float32)
+            )
+            if obj == 'ground' and data_source != 'parahome':
+                obj_transl[:, 0] = 0.0
+                obj_transl[:, 2] = 0.0
+        else:
+            if obj_track.ndim == 2:
+                obj_track = obj_track[start_cut_idx]
+            elif obj_track.ndim != 1:
+                raise ValueError(f"Object {obj!r} must have shape [D] or [T,D], got {obj_track.shape}")
+            obj_quat = obj_track[0:4].copy().astype(np.float32)
+            obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy()  # [3,3]
+            obj_mat = np.einsum('ij,jk->ik', inv_rotation, obj_mat)
+            obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy()  # [6]
+            obj_transl = obj_track[4:7].copy()
+            obj_transl = np.einsum('ij,j->i', inv_rotation, obj_transl + inv_translation)
+            obj_bbox = (
+                obj_track[7:10].copy().astype(np.float32)
+                if obj_track.shape[0] >= 10
+                else np.ones((3,), dtype=np.float32)
+            )
+            if obj == 'ground' and data_source != 'parahome':
+                # set the ground to be at the origin, only keep the y-axis
+                plane_y = obj_transl[1]
+                obj_transl = np.array([0.0, plane_y, 0.0], dtype=np.float32)
+        obj_pose_dict[obj_name_filtered] = {'rot': obj_6d, 'transl': obj_transl, 'bbox': obj_bbox}
+    return obj_pose_dict
+
+
+DEFAULT_SHORT_WINDOW_GLOBAL_SUPERVISION: dict = {
+    "enabled": False,
+    # Windows of at most this many frames restore the world heading / trajectory
+    # target on samples whose label carries it masked (``ncsa/v3``). The
+    # evaluator canonicalises every window to its own first frame, so a static
+    # camera's *constant* heading error is already gone; what the mask exists
+    # for is the error that ACCUMULATES inside the window (GVHMR static-camera
+    # leak, measured at 2-4 deg/s on v3 -> 4-8 deg over 60 frames, 30-60 deg
+    # over 480). Short windows are therefore usable supervision.
+    "max_frames": 60,
+}
+
+
+def process_real_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
+                          filter_short_text=True, add_ground_data=False, rot_rep='6d', split=None,
+                          data_source=None, dynamic_object=False, fps=30, sample_idx=None, IMUSEQMAXLEN=1e6,
+                          acc_scale=1.0, gyro_scale=1.0, smooth_imu_acc=True, motion_only=False,
+                          heading_aug=None, short_window_global_supervision=None):
+    """Crop / align / featurise one real-IMU sample (IMUPoser, DIP-IMU).
+
+    ``sample`` follows ``dataset_process/realworld/realworld_io.py``:
+    ``motion_data_smpl85`` [T, 85] (or the legacy ``motion_smpl`` [T, 69]),
+    ``imu_acc`` [T, 6, 3] and ``imu_ori`` [T, 6, 3, 3] already in model sensor
+    order, plus ``imu_acc_smoothed``. Measured readings are used as-is (no
+    virtual-IMU simulation, no synthetic noise); the crop is aligned to its
+    first frame like every other dataset, the same rotation is applied to the
+    sensor readings, the angular velocity is differentiated from the orientation
+    and the ``(0, -9.8, 0)`` gravity offset is added back, matching the historical
+    ``process_imuposer_data`` / ``process_dipimu_data`` numerics exactly.
+    """
+    assert data_source in REAL_IMU_SOURCES, f"Invalid real-IMU data source: {data_source}"
+
+    if 'motion_data_smpl85' in sample:
+        motion_smpl = np.asarray(sample['motion_data_smpl85'])
+    elif 'motion_smpl' in sample:
+        motion_smpl = np.asarray(sample['motion_smpl'])
+    else:
+        raise ValueError(f"Invalid motion smpl data: {sample.keys()}")
+    transl_slice = slice(72, 75) if motion_smpl.shape[1] == 85 else slice(66, 69)
+    imu_acc = np.asarray(sample['imu_acc'])  # [T, 6, 3]
+    imu_ori = np.asarray(sample['imu_ori'])  # [T, 6, 3, 3]
+
+    n_time = min(len(motion_smpl), len(imu_acc), len(imu_ori))
     assert cut_length is not None
     if n_time < cut_length and split == 'train':
         return None
 
-    sample['motion_smpl'] = sample['motion_smpl'][:n_time]
-    sample['imu_data'] = sample['imu_data'][:n_time]
-
-
-    motion_smpl = sample['motion_smpl'] # [n, 85]
-    smpl_orient = motion_smpl[:, 0:3].copy()
-    smpl_pose = motion_smpl[:, 3:66].copy()
-    smpl_transl = motion_smpl[:, 66:69].copy()
+    smpl_orient = motion_smpl[:n_time, 0:3].copy()
+    smpl_pose = motion_smpl[:n_time, 3:66].copy()
+    smpl_transl = motion_smpl[:n_time, transl_slice].copy()
 
     if random_cut and split == 'train':
-        assert n_time >= cut_length , "cut_length must be greater than or equal to n_time"
-        start_cut_idx, end_cut_idx = random_contiguous_subarray_bounds(n_time, cut_length) 
+        assert n_time >= cut_length, "cut_length must be greater than or equal to n_time"
+        start_cut_idx, end_cut_idx = random_contiguous_subarray_bounds(n_time, cut_length)
     else:
         start_cut_idx = 0
         end_cut_idx = min(n_time, cut_length)
-    
+
     start_cut_idx = start_cut_idx + shift
     end_cut_idx = end_cut_idx + shift
 
@@ -228,118 +507,78 @@ def process_imuposer_data(sample, random_cut, random_mask_text, cut_length, shif
     smpl_orient_new, smpl_transl_new, smpl_pose_new, inv_rotation, inv_translation = \
         align_poses_to_first_frame(smpl_orient, smpl_transl, smpl_pose)
 
-    imu_data = sample['imu_data'][start_cut_idx:end_cut_idx] # [n, 30]
-    a_sim = imu_data[:, :15].reshape(-1, 5, 3)  # [n, 5, 3]
-    R_sim = imu_data[:, 15:].reshape(-1, 5, 3, 3) # [n, 5, 3, 3]
-
-    # do smooth
-    if smooth_imu_acc:
+    a_sim = imu_acc[start_cut_idx:end_cut_idx]  # [n, 6, 3]
+    R_sim = imu_ori[start_cut_idx:end_cut_idx]  # [n, 6, 3, 3]
+    if smooth_imu_acc and not bool(sample.get('imu_acc_smoothed', False)):
         a_sim = smooth_avg(a_sim, s=3)
 
-    # change sequence
-    """
-    ['left_hip', 'right_hip', 'left_ear', 'right_ear', 'left_elbow', 'right_elbow']
-    ['左髋', '右髋', '左耳', '右耳', '左肘', '右肘']
-    0 左手腕 1 右手腕 2 左前口袋 3 右前口袋 4 头部
-    """
-    permute_idx = [2, 3, 4, 4, 0, 1]
-    a_sim = a_sim[:, permute_idx, :] # [n, 6, 3]
-    R_sim = R_sim[:, permute_idx, :, :] # [n, 6, 3, 3]
-
+    # apply the same first-frame alignment to the measured readings
     a_sim = np.einsum('ij,bnj->bni', inv_rotation, a_sim)
     R_sim = np.einsum('ij,bnjk->bnik', inv_rotation, R_sim)
     w_sim = get_angular_velocity(R_sim, fps=fps)
 
-    a_sim = a_sim + np.array((0, -9.8, 0), dtype=np.float32) # add gravity back
+    if bool(sample.get('imu_acc_add_gravity', True)):
+        a_sim = a_sim + REAL_IMU_GRAVITY  # add gravity back (historical numerics; see ncsa README diagnosis)
 
-    obj_pose_dict = {}
+    # The legacy NCSA v1 shards predate ``motion_supervise``. Their PromptHMR
+    # global translation / heading are not valid supervision; retain only the
+    # local joint-pose target. Newer meeting-room NCSA samples carry an explicit
+    # all-True flag and therefore keep full supervision.  Resolved here because
+    # the heading augmentation below is gated on it.
+    motion_supervise = sample.get('motion_supervise')
+    if motion_supervise is None and data_source == 'ncsa':
+        motion_supervise = {'traj': False, 'orient': False, 'pose': True}
+    motion_supervise = dict(motion_supervise or {'traj': True, 'orient': True, 'pose': True})
 
-    if 'objects' not in sample:
-        sample['objects'] = {}
+    # Short windows can keep the global targets even when the clip's label has
+    # them masked: the crop is canonicalised to its own first frame, so only the
+    # error accumulated *inside* the window survives (see
+    # DEFAULT_SHORT_WINDOW_GLOBAL_SUPERVISION). Train split only -- evaluation
+    # must keep scoring what the stored flag says.
+    _short = short_window_global_supervision or {}
+    if bool(_short.get("enabled", False)) and split == 'train':
+        _window_frames = end_cut_idx - start_cut_idx
+        if _window_frames <= int(_short.get("max_frames", 60)):
+            motion_supervise = {**motion_supervise, 'traj': True, 'orient': True}
 
+    # Train-time per-device heading conjugation (gravity is along Y, so the
+    # offset above is unaffected by the yaw rotation).
+    heading_aug_angles = None
+    if heading_aug and bool(heading_aug.get("enabled", False)) and split == 'train':
+        heading_aug_angles = apply_real_heading_aug(
+            a_sim, w_sim, R_sim, sample, heading_aug, motion_supervise=motion_supervise
+        )
+
+    objects = dict(sample.get('objects') or {})
+    ground_record = None
     if add_ground_data:
-        ground_height = 0
-        if 'ground' in sample['objects']:
+        if 'ground' in objects:
             raise ValueError("Ground data already exists")
-        sample['objects']['ground'] = np.array([1.0, 0.0, 0.0, 0.0, 
-                                                0.0, ground_height, 0.0,
-                                                1.0, 1.0, 1.0], dtype=np.float32)
-
-    if len(sample['objects']) > 0:
-        obj_pose = sample['objects']
-        for obj in obj_pose.keys():
-            obj_quat = obj_pose[obj][0:4].copy().astype(np.float32)
-            obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy() # [3,3]
-            obj_mat = np.einsum('ij,jk->ik', inv_rotation, obj_mat) # [3,3]
-            obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy() # [6]
-
-            obj_transl = obj_pose[obj][4:7].copy()
-            obj_transl = np.einsum('ij,j->i', inv_rotation, obj_transl + inv_translation)
-            obj_bbox = np.ones((3,), dtype=np.float32) # placeholder for bbox
-            obj_name_filtered = obj.split('.')[0] # remove the suffix
-            assert obj == obj_name_filtered
-
-            if obj == 'ground' and data_source != 'parahome':
-                # set the ground to be at the origin, only keep the y-axis
-                # but for parahome, we keep the original transformation
-                plane_y = obj_transl[1]
-                obj_transl = np.array([0.0, plane_y, 0.0], dtype=np.float32)
-
-            obj_pose_dict[obj_name_filtered] = {'rot': obj_6d, 'transl': obj_transl, 'bbox': obj_bbox}
+        ground_record = resolve_ground_plane(sample, motion_smpl, data_source, fps)
+        objects['ground'] = np.array([1.0, 0.0, 0.0, 0.0,
+                                      0.0, ground_record['height_y'], 0.0,
+                                      1.0, 1.0, 1.0], dtype=np.float32)
+    obj_pose_dict = _real_imu_object_targets(
+        objects, inv_rotation, inv_translation, start_cut_idx, end_cut_idx, dynamic_object, data_source,
+        object_metadata=sample.get('object_metadata'), source=sample.get('source'),
+    )
 
     smpl_orient_new = torch.tensor(smpl_orient_new).float()
     smpl_transl_new = torch.tensor(smpl_transl_new).float()
     smpl_pose_new = torch.tensor(smpl_pose_new).float()
 
-    # a_sim, w_sim, R_sim, aS, wS, p_sim = simulate_imu_readings(
-    #     p, R, fps=fps,
-    #     noise_raw_traj=False,
-    #     noise_syn_imu=False,
-    #     noise_est_orient=False,
-    #     skip_ESKF=True,
-    #     device='cpu'
-    # )
-    R_sim = R_sim.reshape(R_sim.shape[0], R_sim.shape[1], 9) # flatten the rotation matrix to 9d
-
-    a_sim = torch.tensor(a_sim).float()
-    w_sim = torch.tensor(w_sim).float()
+    R_sim = R_sim.reshape(R_sim.shape[0], R_sim.shape[1], 9)  # flatten the rotation matrix to 9d
+    a_sim = torch.tensor(a_sim).float() / acc_scale
+    w_sim = torch.tensor(w_sim).float() / gyro_scale
     R_sim = torch.tensor(R_sim).float()
-    imu_data = torch.cat([a_sim, w_sim, R_sim], dim=-1) # [n, 5, 15]
+    imu_data = torch.cat([a_sim, w_sim, R_sim], dim=-1)  # [n, 6, 15]
 
-    # import pdb; pdb.set_trace()
-
-    add_small_noise = False
-    if add_small_noise:
-        imu_data = add_velocity_scaled_noise(imu_data)
-
-    if 'text' in sample:
-        sample['description'] = sample['text']
-    elif 'texts' in sample:
-        sample['description'] = sample['texts']
-    elif 'description' not in sample:
-        sample['description'] = []
-
-    gt_text_list = []
-    # filter out too short descriptions
-    if sample['description'] is not None and len(sample['description']) > 0:
-        for desc in sample['description']:
-            # cut too long descriptions
-            words = desc.split(' ')
-            if len(words) > 40:
-                # random cut the description to 40 words and append ellipsis
-                start = random.randint(0, len(words) - 40)
-                desc = ' '.join(words[start:start + 40]) + '...'
-            gt_text_list.append(desc)
-            # if len(desc.split(' ')) >= 7 or not filter_short_text: # at least 7 words; if filter_text is False, then don't filter the text
-            #     gt_text_list.append(desc)
-
-    # if random_mask_text:
-    #     # mask_prob = 0.0 # FIXME
-    #     mask_prob = 0.2 # FIXME
-    #     # if p < mask_prob, then set the gt_text_list to an empty list
-    #     if random.random() < mask_prob:
-    #         gt_text_list = []
-    # gt_text_list = []
+    description = None
+    for key in ('texts', 'text', 'description'):
+        if sample.get(key) is not None:
+            description = sample[key]
+            break
+    gt_text_list = [] if (motion_only or description is None) else [str(desc) for desc in description]
 
     if rot_rep == '6d':
         orient = convert_rotation(smpl_orient_new, 'aa', '6d').reshape(-1, 6).float()
@@ -354,43 +593,121 @@ def process_imuposer_data(sample, random_cut, random_mask_text, cut_length, shif
 
     sample_output = {
         'imu_data': imu_data,
-        'orient': orient, # [n, 6]
+        # Real NCSA variants can omit a physical device (for example the
+        # headphone in meeting_room_2pt_mv).  Keep this per-sample metadata so
+        # the input-layout sampler can mask those slots rather than treating
+        # their zero/identity padding as a measured IMU.
+        'imu_missing_slots': [int(slot) for slot in sample.get('imu_missing_slots', [])],
+        'orient': orient,  # [n, 6]
         'transl': transl,
-        'pose': pose, # [n, 21*6]
+        'pose': pose,  # [n, 21*6]
         'description': gt_text_list,
         'objects': obj_pose_dict,
-        # 'aS': aS,
-        # 'wS': wS,
+        # Which motion channel groups the label is trusted for. Video pseudo-labels
+        # under a static-camera assumption corrupt world heading and root trajectory
+        # but not the local joint angles (README_ncsa_imu.md, 2026-09-14); the
+        # trainer masks the untrusted groups' token labels with -100.
+        'motion_supervise': dict(motion_supervise),
     }
 
     length = len(sample_output['imu_data'])
     length = length - (length % 4)  # make length a multiple of 4
     length = min(length, IMUSEQMAXLEN)  # cut to max length to avoid OOM
 
-    for k, v in sample_output.items():
-        if k in ['description', 'scene_name', 'scene_2d_layout', 'scene_mesh', 'scene_occ_grid']:
-            # skip non-numeric data
+    for k in list(sample_output.keys()):
+        if k in ('description', 'imu_missing_slots'):
             continue
-        elif k == 'objects' and dynamic_object:
-            for obj_name, obj_data in sample_output[k].items():
-                obj_data['rot'] = obj_data['rot'][:length]
-                obj_data['transl'] = obj_data['transl'][:length]
-                obj_data['bbox'] = obj_data['bbox'][:length]
-        elif k != 'objects':
+        elif k == 'objects':
+            if dynamic_object:
+                for obj_data in sample_output[k].values():
+                    obj_data['rot'] = obj_data['rot'][:length]
+                    obj_data['transl'] = obj_data['transl'][:length]
+                    obj_data['bbox'] = obj_data['bbox'][:length]
+        else:
+            if isinstance(sample_output[k], dict):  # per-sample flags (e.g. motion_supervise) are not sequences
+                continue
             sample_output[k] = sample_output[k][:length]
-    
-    if not (len(sample_output['imu_data']) == len(sample_output['orient']) == len(sample_output['transl']) == len(sample_output['pose'])):
-        print('len(imu_data): ', len(sample_output['imu_data']))
-        print('len(orient): ', len(sample_output['orient']))
-        print('len(transl): ', len(sample_output['transl']))
-        print('len(pose): ', len(sample_output['pose']))
-        print('sample_idx: ', sample_idx)
-        import pdb; pdb.set_trace()
-        _=1
 
-    # sample_output = {k: pad_to_length(v, self.MAXLEN) for k, v in sample.items()} # [MAXLEN, 3, nvars]
+    if not (len(sample_output['imu_data']) == len(sample_output['orient']) == len(sample_output['transl']) == len(sample_output['pose'])):
+        raise RuntimeError(
+            f"real-IMU sample {sample_idx}: inconsistent lengths "
+            f"{len(sample_output['imu_data'])}/{len(sample_output['orient'])}/"
+            f"{len(sample_output['transl'])}/{len(sample_output['pose'])}"
+        )
+    sample_output['object_anchor_valid'] = dict(sample.get('object_anchor_valid', {}))
+    if ground_record is not None:
+        sample_output['object_anchor_valid']['ground'] = ground_record['valid']
+        sample_output['ground_plane'] = ground_record
     return sample_output
-    
+
+
+def _legacy_motion_to_smplx_params(motion_smpl):
+    motion_smpl = np.asarray(motion_smpl)
+    transl_slice = slice(72, 75) if motion_smpl.shape[1] == 85 else slice(66, 69)
+    return {
+        'global_orient': motion_smpl[:, 0:3],
+        'body_pose': motion_smpl[:, 3:66],
+        'transl': motion_smpl[:, transl_slice],
+    }
+
+
+def process_imuposer_data(sample, random_cut, random_mask_text, cut_length, shift=0,
+                          filter_short_text=True, add_ground_data=False, rot_rep='6d', split=None,
+                          data_source=None, dynamic_object=False, fps=30, sample_idx=None, IMUSEQMAXLEN=1e6,
+                          smooth_imu_acc=True):
+    """Legacy map-style entry: ``{'motion_smpl' [T,69], 'imu_data' [T,60]}`` (see process_real_imu_data)."""
+    from dataset_process.realworld.realworld_io import imuposer_legacy_to_sample
+
+    unified = imuposer_legacy_to_sample(
+        {'smplx_params': _legacy_motion_to_smplx_params(sample['motion_smpl']), 'imu_data': sample['imu_data']},
+        motion_id=str(sample_idx), actor_id='legacy',
+    )
+    unified['objects'] = sample.get('objects', {})
+    unified['texts'] = sample.get('text', sample.get('texts', sample.get('description', [])))
+    for key in ('id', '__url__', 'ground_plane', 'object_anchor_valid'):
+        if key in sample:
+            unified[key] = sample[key]
+    return process_real_imu_data(
+        unified, random_cut, random_mask_text, cut_length, shift=shift,
+        filter_short_text=filter_short_text, add_ground_data=add_ground_data, rot_rep=rot_rep, split=split,
+        data_source='imuposer', dynamic_object=dynamic_object, fps=fps, sample_idx=sample_idx,
+        IMUSEQMAXLEN=IMUSEQMAXLEN, smooth_imu_acc=smooth_imu_acc,
+    )
+
+
+def process_dipimu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
+                        filter_short_text=True, add_ground_data=False, rot_rep='6d', split=None,
+                        data_source=None, dynamic_object=False, fps=30, sample_idx=None, IMUSEQMAXLEN=1e6,
+                        acc_scale=1.0, gyro_scale=1.0, smooth_imu_acc=True):
+    """Legacy map-style entry: ``{'motion_smpl' [T,69], 'imu_acc' [T,6,3], 'imu_ori' [T,6,3,3]}``.
+
+    The gravity removal / smoothing / orientation re-integration now live in
+    ``dataset_process.realworld.realworld_io.dipimu_legacy_to_sample`` (they do
+    not depend on the crop); the rest is ``process_real_imu_data``.
+    """
+    from dataset_process.realworld.realworld_io import dipimu_legacy_to_sample
+
+    unified = dipimu_legacy_to_sample(
+        {
+            'smplx_params': _legacy_motion_to_smplx_params(sample['motion_smpl']),
+            'imu_acc': sample['imu_acc'],
+            'imu_ori': sample['imu_ori'],
+        },
+        motion_id=str(sample_idx), actor_id='legacy',
+    )
+    unified['objects'] = sample.get('objects', {})
+    # The historical DIP-IMU path never emitted captions.
+    unified['texts'] = []
+    for key in ('id', '__url__', 'ground_plane', 'object_anchor_valid'):
+        if key in sample:
+            unified[key] = sample[key]
+    return process_real_imu_data(
+        unified, random_cut, random_mask_text, cut_length, shift=shift,
+        filter_short_text=filter_short_text, add_ground_data=add_ground_data, rot_rep=rot_rep, split=split,
+        data_source='dipimu', dynamic_object=dynamic_object, fps=fps, sample_idx=sample_idx,
+        IMUSEQMAXLEN=IMUSEQMAXLEN, acc_scale=acc_scale, gyro_scale=gyro_scale,
+        smooth_imu_acc=(smooth_imu_acc and False),  # smoothing already applied at conversion
+    )
 
 def rotation_matrix_to_axis_angle(r: torch.Tensor):
     r"""
@@ -446,233 +763,32 @@ def axis_angle_to_rotation_matrix(a: torch.Tensor):
     r = c * i_cube + (1 - c) * torch.bmm(axis.view(-1, 3, 1), axis.view(-1, 1, 3)) + s * hat(axis)
     return r
 
-def process_dipimu_data(sample, random_cut, random_mask_text, cut_length, shift=0, 
-                        filter_short_text=True, add_ground_data=False, rot_rep='6d', split=None,
-                        data_source=None, dynamic_object=False, fps=30, sample_idx=None, IMUSEQMAXLEN=1e6,
-                        acc_scale=1.0, gyro_scale=1.0, smooth_imu_acc=True):
 
-    n_time = min(len(sample['motion_smpl']), len(sample['imu_acc']))
+def _apply_sensor_time_shifts(tensors, base, shifts, n_window):
+    """Slice ``[N_ext, S, ...]`` tensors to ``[n_window, S, ...]`` with a per-sensor start offset."""
+    out = []
+    for tensor in tensors:
+        sliced = torch.empty((n_window,) + tuple(tensor.shape[1:]), dtype=tensor.dtype)
+        for s in range(tensor.shape[1]):
+            start = int(base + shifts[s])
+            sliced[:, s] = tensor[start:start + n_window, s]
+        out.append(sliced)
+    return tuple(out)
 
-    assert cut_length is not None
-    if n_time < cut_length and split == 'train':
-        return None
 
-    sample['motion_smpl'] = sample['motion_smpl'][:n_time]
-    sample['imu_acc'] = sample['imu_acc'][:n_time]
-    sample['imu_ori'] = sample['imu_ori'][:n_time]
-
-    g = torch.tensor([0, -9.798, 0])
-    ori = torch.tensor(sample['imu_ori']).float()
-    acc = torch.tensor(sample['imu_acc']).float()
-    w = rotation_matrix_to_axis_angle(ori[:-1].transpose(2, 3).matmul(ori[1:])).view(-1, ori.shape[1], 3) * 60
-    w = torch.cat((w, torch.zeros_like(w[:1])))
-    m = ori.transpose(2, 3).matmul(torch.tensor([1, 0, 0.]).unsqueeze(-1)).squeeze(-1)
-    a = ori.transpose(2, 3).matmul((acc - g).unsqueeze(-1)).squeeze(-1)
-
-    aS = a
-    wS = w
-    mS = m
-
-    if smooth_imu_acc:
-        aS = smooth_avg(aS, s=3)
-    aS = torch.tensor(aS).float()
-
-    # simulate IMU ESKF
-    N = len(wS)
-    # R_sim = torch.empty(N, 6, 3, 3)
-    R_sim = torch.empty(N, 6, 3, 3)
-    R_sim[0] = torch.eye(3).float()
-    # angular velocity integration, much faster for approximate training
-    dR = axis_angle_to_rotation_matrix(wS / 60).view(-1, 6, 3, 3).cpu()
-    for i in range(1, N):
-        R_sim[i] = R_sim[i - 1].matmul(dR[i])
-        # print(R_sim[i])
-
-    # a_sim = R_sim.matmul(aS.unsqueeze(-1)).squeeze(-1) + torch.tensor((0, -9.8, 0), device=device)
-    a_sim = R_sim.matmul(aS.unsqueeze(-1)).squeeze(-1)
-    w_sim = R_sim.matmul(wS.unsqueeze(-1)).squeeze(-1)
-
-    motion_smpl = sample['motion_smpl'] # [n, 85]
-    smpl_orient = motion_smpl[:, 0:3].copy()
-    smpl_pose = motion_smpl[:, 3:66].copy()
-    smpl_transl = motion_smpl[:, 66:69].copy()
-
-    if random_cut and split == 'train':
-        assert n_time >= cut_length , "cut_length must be greater than or equal to n_time"
-        start_cut_idx, end_cut_idx = random_contiguous_subarray_bounds(n_time, cut_length) 
-    else:
-        start_cut_idx = 0
-        end_cut_idx = min(n_time, cut_length)
-    
-    start_cut_idx = start_cut_idx + shift
-    end_cut_idx = end_cut_idx + shift
-
-    smpl_orient = smpl_orient[start_cut_idx:end_cut_idx]
-    smpl_pose = smpl_pose[start_cut_idx:end_cut_idx]
-    smpl_transl = smpl_transl[start_cut_idx:end_cut_idx]
-
-    # align the smpl poses to the first frame
-    smpl_orient_new, smpl_transl_new, smpl_pose_new, inv_rotation, inv_translation = \
-        align_poses_to_first_frame(smpl_orient, smpl_transl, smpl_pose)
-
-    # change sequence
-    """
-    ['left_hip', 'right_hip', 'left_ear', 'right_ear', 'left_elbow', 'right_elbow']
-    (0: left wrist, 1: right wrist, 2: left thigh, 3: right thigh, 4: head, 5: pelvis)
-    0 左手腕 1 右手腕
-    """
-    a_sim = a_sim[start_cut_idx:end_cut_idx]
-    R_sim = R_sim[start_cut_idx:end_cut_idx]
-    w_sim = w_sim[start_cut_idx:end_cut_idx]
-
-    permute_idx = [2, 3, 4, 4, 0, 1]
-    a_sim = a_sim[:, permute_idx, :] # [n, 6, 3]
-    R_sim = R_sim[:, permute_idx, :, :] # [n, 6, 3, 3]
-
-    a_sim = np.einsum('ij,bnj->bni', inv_rotation, a_sim)
-    R_sim = np.einsum('ij,bnjk->bnik', inv_rotation, R_sim)
-    w_sim = get_angular_velocity(R_sim, fps=fps)
-
-    a_sim = a_sim + np.array((0, -9.8, 0), dtype=np.float32) # add gravity back
-
-    obj_pose_dict = {}
-
-    if 'objects' not in sample:
-        sample['objects'] = {}
-
-    if add_ground_data:
-        ground_height = 0
-        if 'ground' in sample['objects']:
-            raise ValueError("Ground data already exists")
-        sample['objects']['ground'] = np.array([1.0, 0.0, 0.0, 0.0, 
-                                                0.0, ground_height, 0.0,
-                                                1.0, 1.0, 1.0], dtype=np.float32)
-
-    if len(sample['objects']) > 0:
-        obj_pose = sample['objects']
-        for obj in obj_pose.keys():
-            obj_quat = obj_pose[obj][0:4].copy().astype(np.float32)
-            obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy() # [3,3]
-            obj_mat = np.einsum('ij,jk->ik', inv_rotation, obj_mat) # [3,3]
-            obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy() # [6]
-
-            obj_transl = obj_pose[obj][4:7].copy()
-            obj_transl = np.einsum('ij,j->i', inv_rotation, obj_transl + inv_translation)
-            obj_bbox = np.ones((3,), dtype=np.float32) # placeholder for bbox
-            obj_name_filtered = obj.split('.')[0] # remove the suffix
-            assert obj == obj_name_filtered
-
-            if obj == 'ground' and data_source != 'parahome':
-                # set the ground to be at the origin, only keep the y-axis
-                # but for parahome, we keep the original transformation
-                plane_y = obj_transl[1]
-                obj_transl = np.array([0.0, plane_y, 0.0], dtype=np.float32)
-
-            obj_pose_dict[obj_name_filtered] = {'rot': obj_6d, 'transl': obj_transl, 'bbox': obj_bbox}
-
-    smpl_orient_new = torch.tensor(smpl_orient_new).float()
-    smpl_transl_new = torch.tensor(smpl_transl_new).float()
-    smpl_pose_new = torch.tensor(smpl_pose_new).float()
-
-    # a_sim, w_sim, R_sim, aS, wS, p_sim = simulate_imu_readings(
-    #     p, R, fps=fps,
-    #     noise_raw_traj=False,
-    #     noise_syn_imu=False,
-    #     noise_est_orient=False,
-    #     skip_ESKF=True,
-    #     device='cpu'
-    # )
-    R_sim = R_sim.reshape(R_sim.shape[0], R_sim.shape[1], 9) # flatten the rotation matrix to 9d
-
-    a_sim = torch.tensor(a_sim).float() / acc_scale
-    w_sim = torch.tensor(w_sim).float() / gyro_scale
-    R_sim = torch.tensor(R_sim).float()
-    imu_data = torch.cat([a_sim, w_sim, R_sim], dim=-1) # [n, 5, 15]
-
-    # import pdb; pdb.set_trace()
-
-    add_small_noise = False
-    if add_small_noise:
-        imu_data = add_velocity_scaled_noise(imu_data)
-
-    if 'text' in sample:
-        sample['description'] = sample['text']
-    elif 'texts' in sample:
-        sample['description'] = sample['texts']
-    elif 'description' not in sample:
-        sample['description'] = []
-
-    gt_text_list = []
-    # filter out too short descriptions
-    if sample['description'] is not None and len(sample['description']) > 0:
-        for desc in sample['description']:
-            if len(desc.split(' ')) >= 7 or not filter_short_text: # at least 7 words; if filter_text is False, then don't filter the text
-                gt_text_list.append(desc)
-
-    if random_mask_text:
-        # mask_prob = 0.0 # FIXME
-        mask_prob = 0.2 # FIXME
-        # if p < mask_prob, then set the gt_text_list to an empty list
-        if random.random() < mask_prob:
-            gt_text_list = []
-    
-    gt_text_list = []
-
-    if rot_rep == '6d':
-        orient = convert_rotation(smpl_orient_new, 'aa', '6d').reshape(-1, 6).float()
-        pose = convert_rotation(smpl_pose_new.reshape(-1, 3), 'aa', '6d').reshape(-1, 21*6).float()
-        transl = smpl_transl_new
-    elif rot_rep == 'aa':
-        orient = smpl_orient_new.reshape(-1, 3).float()
-        pose = smpl_pose_new.reshape(-1, 21*3).float()
-        transl = smpl_transl_new
-    else:
-        raise ValueError(f"Invalid rotation representation: {rot_rep}")
-
-    sample_output = {
-        'imu_data': imu_data,
-        'orient': orient, # [n, 6]
-        'transl': transl,
-        'pose': pose, # [n, 21*6]
-        'description': gt_text_list,
-        'objects': obj_pose_dict,
-        # 'aS': aS,
-        # 'wS': wS,
-    }
-
-    length = len(sample_output['imu_data'])
-    length = length - (length % 4)  # make length a multiple of 4
-    length = min(length, IMUSEQMAXLEN)  # cut to max length to avoid OOM
-
-    for k, v in sample_output.items():
-        if k in ['description', 'scene_name', 'scene_2d_layout', 'scene_mesh', 'scene_occ_grid']:
-            # skip non-numeric data
-            continue
-        elif k == 'objects' and dynamic_object:
-            for obj_name, obj_data in sample_output[k].items():
-                obj_data['rot'] = obj_data['rot'][:length]
-                obj_data['transl'] = obj_data['transl'][:length]
-                obj_data['bbox'] = obj_data['bbox'][:length]
-        elif k != 'objects':
-            sample_output[k] = sample_output[k][:length]
-    
-    if not (len(sample_output['imu_data']) == len(sample_output['orient']) == len(sample_output['transl']) == len(sample_output['pose'])):
-        print('len(imu_data): ', len(sample_output['imu_data']))
-        print('len(orient): ', len(sample_output['orient']))
-        print('len(transl): ', len(sample_output['transl']))
-        print('len(pose): ', len(sample_output['pose']))
-        print('sample_idx: ', sample_idx)
-        import pdb; pdb.set_trace()
-        _=1
-
-    # sample_output = {k: pad_to_length(v, self.MAXLEN) for k, v in sample.items()} # [MAXLEN, 3, nvars]
-    return sample_output
-
-def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0, 
+def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
                      filter_short_text=True, add_ground_data=False, rot_rep='6d',
                      motion_only=False, scene_only=False, IMUSEQMAXLEN=1e6,
-                     data_source=None, dynamic_object=False, fps=30, split=None, add_imu_noise=False, 
-                     acc_scale=1.0, gyro_scale=1.0):
+                     data_source=None, dynamic_object=False, fps=30, split=None, add_imu_noise=False,
+                     acc_scale=1.0, gyro_scale=1.0, yaw_aug=None, imu_noise_cfg=None):
+    """Crop / align / synthesise one virtual-IMU sample.
+
+    ``imu_noise_cfg`` (``training.imu_noise``, see imu_synthesis/imu_noise.py)
+    switches the virtual IMU to the device-realism simulator: on the train
+    split it adds bandwidth / attitude / bias / timing imperfections, on every
+    other split it only applies the fixed evaluation low-pass. ``None`` (or
+    ``enabled: false``) keeps the historical noise-free path bit for bit.
+    """
 
     assert data_source in ['parahome', 'humoto', 'other_dataset'], f"Invalid data source: {data_source}"
 
@@ -682,7 +798,7 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
         motion_smpl = sample['motion_data_smpl85'] # [n, 85]
     else:
         raise ValueError(f"Invalid motion smpl data: {sample.keys()}")
-    imu_traj = sample['imu_traj'] # [n, 6, 6]
+    imu_traj = _eval_imu_traj_override(sample, split) # [n, 6, 6]
 
     n_time = len(motion_smpl)
     assert cut_length is not None
@@ -701,6 +817,11 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
         ).view(n_time, -1, 3, 3).numpy().astype(np.float32)
     ) # [n, 6, 3, 3]
     imu_position = imu_traj_data[:, :, 3:6] # [n, 6, 3]
+    if sample.get('source', data_source) == 'humoto':
+        # Older tar files / legacy pickles predate the converter correction.
+        # Only virtual-sensor positions have this offset; objects do not.
+        from dataset_process.humoto.humoto_io import world_imu_positions
+        imu_position = world_imu_positions(imu_position, sample)
 
     if random_cut and split == 'train': #FIXME
         assert n_time >= cut_length , "cut_length must be greater than or equal to n_time"
@@ -712,8 +833,16 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
     start_cut_idx = start_cut_idx + shift
     end_cut_idx = end_cut_idx + shift
 
-    imu_rot = imu_rot[start_cut_idx:end_cut_idx]
-    imu_position = imu_position[start_cut_idx:end_cut_idx]
+    # Device-realism augmentation: crop the IMU trajectory with a margin so the
+    # per-sensor / IMU-vs-motion time shifts stay inside the sequence. The
+    # motion targets keep the exact [start, end) window.
+    noise_cfg = resolve_imu_noise_cfg(imu_noise_cfg)
+    noise_train = noise_cfg is not None and split == 'train'
+    margin = crop_margin(noise_cfg) if noise_train else 0
+    margin_lo = min(margin, start_cut_idx)
+    margin_hi = min(margin, n_time - end_cut_idx)
+    imu_rot = imu_rot[start_cut_idx - margin_lo:end_cut_idx + margin_hi]
+    imu_position = imu_position[start_cut_idx - margin_lo:end_cut_idx + margin_hi]
 
     smpl_orient = smpl_orient[start_cut_idx:end_cut_idx]
     smpl_pose = smpl_pose[start_cut_idx:end_cut_idx]
@@ -736,32 +865,57 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
 
     obj_pose_dict = {}
 
-    if 'objects' not in sample:
-        sample['objects'] = {}
-
+    objects = dict(sample.get('objects') or {})
+    ground_record = None
     if add_ground_data:
-        ground_height = 0
-        if 'ground' in sample['objects']:
+        if 'ground' in objects:
             raise ValueError("Ground data already exists")
-        sample['objects']['ground'] = np.array([1.0, 0.0, 0.0, 0.0, 
-                                                 0.0, ground_height, 0.0,
-                                                 1.0, 1.0, 1.0], dtype=np.float32)
+        source = sample.get('source', 'motionmillion' if data_source == 'other_dataset' else data_source)
+        ground_record = resolve_ground_plane(sample, motion_smpl, source, fps)
+        objects['ground'] = np.array([1.0, 0.0, 0.0, 0.0,
+                                     0.0, ground_record['height_y'], 0.0,
+                                     1.0, 1.0, 1.0], dtype=np.float32)
 
-    if len(sample['objects']) > 0:
-        obj_pose = sample['objects']
+    if len(objects) > 0:
+        obj_pose = objects
         for obj in obj_pose.keys():
 
             if dynamic_object:
-        
-                obj_quat = obj_pose[obj][:, 0:4].copy().astype(np.float32)
+
+                obj_track = np.asarray(obj_pose[obj])
+                if obj_track.ndim == 1:
+                    # Promote HuMOTO-style static objects (and synthetic ground)
+                    # to the shared temporal object representation.
+                    obj_track = np.repeat(
+                        obj_track[None], end_cut_idx - start_cut_idx, axis=0
+                    )
+                elif obj_track.ndim == 2:
+                    # Object, body, and IMU must use the exact same random crop.
+                    obj_track = obj_track[start_cut_idx:end_cut_idx]
+                else:
+                    raise ValueError(
+                        f"Object {obj!r} must have shape [D] or [T,D], "
+                        f"got {obj_track.shape}"
+                    )
+                if len(obj_track) != len(smpl_orient_new):
+                    raise ValueError(
+                        f"Object/body crop mismatch for {obj!r}: "
+                        f"{len(obj_track)} != {len(smpl_orient_new)}"
+                    )
+
+                obj_quat = obj_track[:, 0:4].copy().astype(np.float32)
                 obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy() # [t,3,3]
                 obj_mat = np.einsum('ij,tjk->tik', inv_rotation, obj_mat) # [t,3,3]
                 obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy() # [t,6]
 
                 t = obj_6d.shape[0]
-                obj_transl = obj_pose[obj][:,4:7].copy()
+                obj_transl = obj_track[:,4:7].copy()
                 obj_transl = np.einsum('ij,tj->ti', inv_rotation, obj_transl + inv_translation)
-                obj_bbox = np.ones((t, 3), dtype=np.float32) # placeholder for bbox
+                obj_bbox = (
+                    obj_track[:, 7:10].copy().astype(np.float32)
+                    if obj_track.shape[1] >= 10
+                    else np.ones((t, 3), dtype=np.float32)
+                )
 
                 obj_name_filtered = obj.split('.')[0] # remove the suffix
                 assert obj == obj_name_filtered
@@ -775,14 +929,29 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
                 obj_pose_dict[obj_name_filtered] = {'rot': obj_6d, 'transl': obj_transl, 'bbox': obj_bbox}
                 # import pdb; pdb.set_trace()
             else:
-                obj_quat = obj_pose[obj][0:4].copy().astype(np.float32)
+                # HiPHI/OMOMO store object trajectories as [T, 10].  Static
+                # object mode deliberately supervises only O0, so collapse a
+                # temporal track to the crop's first frame before processing it.
+                obj_static = np.asarray(obj_pose[obj])
+                if obj_static.ndim == 2:
+                    obj_static = obj_static[start_cut_idx]
+                elif obj_static.ndim != 1:
+                    raise ValueError(
+                        f"Object {obj!r} must have shape [D] or [T,D], "
+                        f"got {obj_static.shape}"
+                    )
+                obj_quat = obj_static[0:4].copy().astype(np.float32)
                 obj_mat = convert_rotation(torch.from_numpy(obj_quat), 'quat', 'mat').float().cpu().numpy() # [3,3]
                 obj_mat = np.einsum('ij,jk->ik', inv_rotation, obj_mat) # [3,3]
                 obj_6d = convert_rotation(torch.from_numpy(obj_mat), 'mat', '6d').float().cpu().numpy() # [6]
 
-                obj_transl = obj_pose[obj][4:7].copy()
+                obj_transl = obj_static[4:7].copy()
                 obj_transl = np.einsum('ij,j->i', inv_rotation, obj_transl + inv_translation)
-                obj_bbox = obj_pose[obj][7:10].copy()
+                obj_bbox = (
+                    obj_static[7:10].copy()
+                    if obj_static.shape[0] >= 10
+                    else np.ones(3, dtype=np.float32)
+                )
 
                 obj_name_filtered = obj.split('.')[0] # remove the suffix
                 assert obj == obj_name_filtered
@@ -801,18 +970,63 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
     smpl_transl_new = torch.tensor(smpl_transl_new).float()
     smpl_pose_new = torch.tensor(smpl_pose_new).float()
 
-    a_sim, w_sim, R_sim, aS, wS, p_sim = simulate_imu_readings(
-        p, R, fps=fps,
-        noise_raw_traj=add_imu_noise,
-        noise_syn_imu=add_imu_noise,
-        noise_est_orient=add_imu_noise,
-        skip_ESKF=True,
-        device='cpu'
-    )
+    if noise_cfg is None:
+        a_sim, w_sim, R_sim, aS, wS, p_sim = simulate_imu_readings(
+            p, R, fps=fps,
+            noise_raw_traj=add_imu_noise,
+            noise_syn_imu=add_imu_noise,
+            noise_est_orient=add_imu_noise,
+            skip_ESKF=True,
+            device='cpu'
+        )
+    else:
+        # numpy's global RNG is not re-seeded per dataloader worker; derive the
+        # generator from python's ``random`` (which is).
+        rng = np.random.default_rng(random.getrandbits(64))
+        a_sim, w_sim, R_sim = simulate_noisy_imu_readings(
+            p, R, fps=fps, cfg=noise_cfg, train=noise_train, rng=rng
+        )
+        if noise_train:
+            n_window = end_cut_idx - start_cut_idx
+            shifts = np.clip(
+                sample_time_shifts(noise_cfg, rng, R.shape[1]), -margin_lo, margin_hi
+            )
+            a_sim, w_sim, R_sim = _apply_sensor_time_shifts(
+                (a_sim, w_sim, R_sim), margin_lo, shifts, n_window
+            )
+            imu_position_new = imu_position_new[margin_lo:margin_lo + n_window]
     a_sim = a_sim / acc_scale
     w_sim = w_sim / gyro_scale
     R_sim = R_sim.reshape(R_sim.shape[0], R_sim.shape[1], 9) # flatten the rotation matrix to 9d
     imu_data = torch.cat([a_sim, w_sim, R_sim], dim=-1) # [n, 6, 15]
+
+    if split == "train" and _yaw_aug_enabled(yaw_aug):
+        # Random world-yaw augmentation: canonicalize to a uniformly random
+        # horizontal heading instead of the GT-pelvis one, and rotate every
+        # world-frame field (IMU channels, GT root orient/transl, objects) by
+        # the SAME Ry so the input/target relabeling stays consistent. The GT
+        # supervision is first-frame-relative, so this only removes the
+        # privileged dependence on the absolute heading, it does not change
+        # the underlying motion. Pose (local joint rotations) is untouched.
+        _phi = random.uniform(0.0, 360.0)
+        _Ry = _yaw_rot_matrix_y(_phi)
+        imu_data = _rotate_imu_data_y(imu_data, _Ry)
+        imu_position_new = _rot_vec3_y(imu_position_new, _Ry).astype(np.float32)
+        smpl_transl_new = torch.from_numpy(
+            _rot_vec3_y(smpl_transl_new.numpy(), _Ry).astype(np.float32)
+        )
+        smpl_orient_new = torch.from_numpy(
+            _rot_rot_rep_y(smpl_orient_new.numpy(), "aa", _Ry).astype(np.float32)
+        )
+        for _k, _d in obj_pose_dict.items():
+            if _d.get("rot") is not None:
+                _d["rot"] = _rot_rot_rep_y(
+                    np.asarray(_d["rot"], dtype=np.float32), "6d", _Ry
+                )
+            if _d.get("transl") is not None:
+                _d["transl"] = _rot_vec3_y(
+                    np.asarray(_d["transl"], dtype=np.float32), _Ry
+                )
 
     # add_small_noise = False
     # if add_small_noise:
@@ -855,7 +1069,10 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
             if random.random() < mask_prob:
                 gt_text_list = []
     
-    if motion_only:
+    if motion_only or scene_only:
+        # motion_only trains the motion heads alone; scene_only (M2S) predicts
+        # objects from ground-truth motion with no language conditioning, so
+        # the caption is removed from the sequence in both cases.
         gt_text_list = []
 
     if rot_rep == '6d':
@@ -876,8 +1093,8 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
         'pose': pose, # [n, 21*6]
         'description': gt_text_list,
         'objects': obj_pose_dict,
-        # 'aS': aS,
-        # 'wS': wS,
+        # synthetic data: exact GT, every group supervised
+        'motion_supervise': {'traj': True, 'orient': True, 'pose': True},
     }
 
     length = len(sample_output['imu_data'])
@@ -894,7 +1111,32 @@ def process_imu_data(sample, random_cut, random_mask_text, cut_length, shift=0,
                 obj_data['transl'] = obj_data['transl'][:length]
                 obj_data['bbox'] = obj_data['bbox'][:length]
         elif k != 'objects':
+            if isinstance(sample_output[k], dict):  # per-sample flags (e.g. motion_supervise) are not sequences
+                continue
             sample_output[k] = sample_output[k][:length]
+
+    # Keep aligned sensor locations for full-eval visualization. The model
+    # continues to consume only ``imu_data``.
+    sample_output['imu_positions'] = torch.from_numpy(
+        imu_position_new[:length]
+    ).float()
+
+    # Preserve HiPHI supervision metadata without changing the tensor interface
+    # consumed by existing HuMOTO/MotionMillion training code.
+    for mask_key in ('object_valid_mask', 'object_motion_mask'):
+        if mask_key in sample:
+            sample_output[mask_key] = {
+                name: np.asarray(mask)[start_cut_idx:end_cut_idx][:length].copy()
+                for name, mask in sample[mask_key].items()
+            }
+    for metadata_key in ('object_metadata', 'task_mode', 'annotation_scope'):
+        if metadata_key in sample:
+            sample_output[metadata_key] = sample[metadata_key]
+
+    sample_output['object_anchor_valid'] = dict(sample.get('object_anchor_valid', {}))
+    if ground_record is not None:
+        sample_output['object_anchor_valid']['ground'] = ground_record['valid']
+        sample_output['ground_plane'] = ground_record
 
     # sample_output = {k: pad_to_length(v, self.MAXLEN) for k, v in sample.items()} # [MAXLEN, 3, nvars]
 
@@ -914,7 +1156,11 @@ class IMUDataset():
         random_cut: bool = False, # whether to randomly cut the sequence
         random_mask_text: bool = False, # whether to randomly mask the text
         add_humoto_data: bool = False, # whether to add humoto data
-        add_motiongv_data: bool = False, # whether to add motiongv data # TODO: too noisy, harmful for training
+        # MotionGV is recovered from monocular video: many clips barely move and their
+        # captions describe actions the recovered pose never performs. Excluded by
+        # default here and, since 2026-09-10, in the streaming loader's eval path too
+        # (wds_loader.DEFAULT_EXCLUDED_DATASETS).
+        add_motiongv_data: bool = False,
         shift: int = 0, # whether to shift the imu data
         selected_dataset: Optional[str] = None, # whether to evaluate on the full dataset
         shuffle_list: bool = True, # whether to shuffle the data
@@ -1001,7 +1247,7 @@ class IMUDataset():
         
         self.selected_dataset = selected_dataset
         if selected_dataset is not None:
-            assert selected_dataset in ['HUMOTO', 'LINGO', 'ParaHome', 'humanml', 'imuposer', 'dipimu']
+            assert selected_dataset in ['HUMOTO', 'LINGO', 'ParaHome', 'humanml', 'imuposer', 'dipimu', 'ncsa']
             target_datasets = [selected_dataset]
 
         # Other dataset
@@ -1130,22 +1376,11 @@ class IMUDataset():
             with open(sample_path, 'rb') as f:
                 sample = pickle.load(f)
 
-            # some processing
+            # HuMOTO motion_smpl stores the SMPL-X translation parameter;
+            # convert only that field to the global pelvis position expected by
+            # process_imu_data. That function separately corrects the legacy
+            # virtual-sensor offset; world-space objects stay unchanged.
             sample['motion_smpl'][:, 72:75] = sample['motion_smpl'][:, 72:75] + self.rest_pelvis
-            sample['imu_traj'][:, :, 3:6] = sample['imu_traj'][:, :, 3:6] + self.rest_pelvis
-            gt_objects = sample['objects']
-            gt_objects_new = gt_objects.copy()
-            if self.dynamic_object:
-                for obj_name, obj_data in gt_objects.items():
-                    obj_data = obj_data.astype(np.float32)
-                    obj_data[:, 5] = obj_data[:, 5] + self.rest_pelvis[1]
-                    gt_objects_new[obj_name] = obj_data
-            else:
-                for obj_name, obj_data in gt_objects.items():
-                    obj_data = obj_data.astype(np.float32)
-                    obj_data[5] = obj_data[5] + self.rest_pelvis[1]
-                    gt_objects_new[obj_name] = obj_data
-            sample['objects'] = gt_objects_new
 
         elif isinstance(sample_idx, str) and 'parahome' in sample_idx:
             # load from parahome path
@@ -1213,6 +1448,8 @@ class IMUDataset():
                 sample = pickle.load(f)
  
 
+        sample.setdefault('id', str(sample_idx))
+        sample.setdefault('source', 'motionmillion' if data_source == 'other_dataset' else data_source)
         filter_short_text = (self.selected_dataset is None) and (self.selected_imu_seq_path is None)
 
         if data_source == 'imuposer':

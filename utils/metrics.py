@@ -7,7 +7,34 @@ from torch import Tensor
 from utils.egoallo.transforms import SO3, SE3
 from utils.human import load_smplx_model
 
-smplx_model = load_smplx_model()
+_smplx_model = None
+_smplx_device = None
+
+
+def get_smplx_model():
+    """Return the process-local SMPL-X model, building it on first use.
+
+    This used to run at import time, which is before accelerate assigns each rank
+    its device, so every rank's body model ended up on cuda:0. Deferring the build
+    to the first call puts it on the rank's own device.
+    """
+    global _smplx_model, _smplx_device
+    if _smplx_model is None:
+        _smplx_device = (torch.device(f"cuda:{torch.cuda.current_device()}")
+                         if torch.cuda.is_available() else torch.device("cpu"))
+        _smplx_model = load_smplx_model(_smplx_device)
+    return _smplx_model
+
+
+def get_smplx_device():
+    """Device the body model sits on.
+
+    BodyModel registers its tensors as buffers and exposes no parameters, so
+    ``next(model.parameters())`` raises StopIteration -- the device is recorded
+    when the model is built instead.
+    """
+    get_smplx_model()
+    return _smplx_device
 
 def mse(original, decoded):
     return np.mean((original - decoded) ** 2)
@@ -102,116 +129,141 @@ def mpjpe_error(
 
     return mpjpe.cpu().numpy()
 
-def compute_mpjpe(sample_dict, return_joints=False, max_frame_length=None):
+
+def decode_smplx_motion_geometry(
+    sample_dict,
+    max_frame_length=None,
+    *,
+    include_vertices=True,
+    to_cpu=True,
+):
+    """Decode saved GT/pred body poses into root-local SMPL-X geometry.
+
+    This is the repository-specific adapter used by both online diagnostics and
+    the canonical, model-independent metrics in :mod:`metric.motion`.  It does
+    no metric calculation; callers decide which numerical protocol to apply to
+    the returned joints and vertices.
+
+    Returns:
+        ``(gt_joints, pred_joints, gt_vertices, pred_vertices)``. Vertices are
+        ``None`` when ``include_vertices`` is false. Tensors remain on the body
+        model device when ``to_cpu`` is false.
     """
+
+    pred_dict = sample_dict['pred']
+    gt_dict = sample_dict['gt']
+    smplx_model = get_smplx_model()
+    device = get_smplx_device()
+
+    def _pose(value):
+        if torch.is_tensor(value):
+            value = value.detach()
+        else:
+            value = torch.from_numpy(np.asarray(value))
+        value = value.reshape(-1, 63)
+        if max_frame_length is not None:
+            value = value[:max_frame_length]
+        return value.to(device=device, dtype=torch.float32)
+
+    gt_pose = _pose(gt_dict['pose'])
+    pred_pose = _pose(pred_dict['pose'])
+    if gt_pose.shape != pred_pose.shape:
+        raise ValueError(
+            f"GT/pred pose shape mismatch: {tuple(gt_pose.shape)} vs "
+            f"{tuple(pred_pose.shape)}"
+        )
+    num_poses = gt_pose.shape[0]
+    dummy_root_orient = torch.zeros((2 * num_poses, 3), dtype=torch.float32, device=device)
+    dummy_trans = torch.zeros((2 * num_poses, 3), dtype=torch.float32, device=device)
+    dummy_betas = torch.zeros((2 * num_poses, 10), dtype=torch.float32, device=device)
+    with torch.no_grad():
+        output = smplx_model(
+            pose_body=torch.cat([gt_pose, pred_pose], dim=0),
+            root_orient=dummy_root_orient,
+            trans=dummy_trans,
+            betas=dummy_betas,
+        )
+    joints = output.Jtr[:, :22, :3]
+    values = (
+        joints[:num_poses],
+        joints[num_poses:],
+        output.v[:num_poses] if include_vertices else None,
+        output.v[num_poses:] if include_vertices else None,
+    )
+    return tuple(value.cpu() if to_cpu and value is not None else value for value in values)
+
+
+def compute_mpjpe(sample_dict, return_joints=False, max_frame_length=None):
+    """MPJPE (mm) plus root / joint orientation and root translation errors.
+
+    Everything runs on the body model's device, and the ground truth and the
+    prediction go through one stacked SMPL-X pass. The previous version
+    converted rotations on the CPU (tiny tensors, so torch's per-op overhead
+    dominated), ran the body model twice and copied both vertex sets back to
+    the host although only the joints are used; after the caption-decoding
+    fix it was a quarter of the per-sample evaluation time. Values match the
+    old path to float32 rounding.
     """
     pred_dict = sample_dict['pred']
     gt_dict = sample_dict['gt']
 
-    orient = gt_dict['orient'].reshape(-1, 3) # [N, 3]
-    transl = gt_dict['transl'].reshape(-1, 3) # [N, 3]
-    pose = gt_dict['pose'].reshape(-1, 63) # [N, 63]
+    device = get_smplx_device()
 
-    output_orient = pred_dict['orient'].reshape(-1, 3)
-    output_transl = pred_dict['transl'].reshape(-1, 3)
-    output_pose = pred_dict['pose'].reshape(-1, 63)
+    def _prep(value, width):
+        if torch.is_tensor(value):
+            value = value.detach()
+        else:
+            value = torch.from_numpy(np.asarray(value))
+        value = value.reshape(-1, width)
+        if max_frame_length is not None:
+            value = value[:max_frame_length]
+        return value.to(device=device, dtype=torch.float32)
 
-    if max_frame_length is not None:
-        pose = pose[:max_frame_length]
-        output_pose = output_pose[:max_frame_length]
-        orient = orient[:max_frame_length]
-        output_orient = output_orient[:max_frame_length]
-        transl = transl[:max_frame_length]
-        output_transl = output_transl[:max_frame_length]
+    orient, output_orient = _prep(gt_dict['orient'], 3), _prep(pred_dict['orient'], 3)
+    transl, output_transl = _prep(gt_dict['transl'], 3), _prep(pred_dict['transl'], 3)
+    pose, output_pose = _prep(gt_dict['pose'], 63), _prep(pred_dict['pose'], 63)
+    num_poses = pose.shape[0]
 
     # metrics (3d trajectory)
-    label_Ts = torch.cat([
-        convert_rotation(torch.from_numpy(orient).float(), 'aa', 'quat'), 
-        torch.from_numpy(transl).float()
-    ], dim=-1)
-    pred_Ts = torch.cat([
-        convert_rotation(torch.from_numpy(output_orient).float(), 'aa', 'quat'), 
-        torch.from_numpy(output_transl).float()
-    ], dim=-1)
+    label_Ts = torch.cat([convert_rotation(orient, 'aa', 'quat'), transl], dim=-1)
+    pred_Ts = torch.cat([convert_rotation(output_orient, 'aa', 'quat'), output_transl], dim=-1)
     orient_error = orientation_error(label_Ts, pred_Ts).item()
     transl_error = translation_error(label_Ts, pred_Ts).item()
 
-    # metrics (human poses)
-    original_pose_aa = pose.reshape(-1, 21, 3)
-    decoded_pose_aa = output_pose.reshape(-1, 21, 3)
-
-    original_pose_quat_wxyz = convert_rotation(
-        torch.from_numpy(original_pose_aa).float(), 'aa', 'quat'  # (N, 21, 4)
-    ).numpy()
-    decoded_pose_quat_wxyz = convert_rotation(
-        torch.from_numpy(decoded_pose_aa).float(), 'aa', 'quat'   # (N, 21, 4)
-    ).numpy()
-
-    dummy_transl = np.zeros((pose.shape[0], 21, 3))
-    original_Ts = torch.from_numpy(
-        np.concatenate((original_pose_quat_wxyz, dummy_transl), axis=-1)  # (N*21, 7)
-    ).float().reshape(-1, 7)
-    decoded_Ts = torch.from_numpy(
-        np.concatenate((decoded_pose_quat_wxyz, dummy_transl), axis=-1)  # (N*21, 7)
-    ).float().reshape(-1, 7)
+    # metrics (human poses): per-joint rotation error, translation zeroed
+    original_pose_quat = convert_rotation(pose.reshape(-1, 21, 3), 'aa', 'quat')  # (N, 21, 4)
+    decoded_pose_quat = convert_rotation(output_pose.reshape(-1, 21, 3), 'aa', 'quat')
+    dummy_transl = torch.zeros((num_poses, 21, 3), dtype=torch.float32, device=device)
+    original_Ts = torch.cat([original_pose_quat, dummy_transl], dim=-1).reshape(-1, 7)  # (N*21, 7)
+    decoded_Ts = torch.cat([decoded_pose_quat, dummy_transl], dim=-1).reshape(-1, 7)
     ori_error = orientation_error(original_Ts, decoded_Ts).item()
 
-    num_poses = pose.shape[0]
-    original_T_world_root = torch.zeros((num_poses, 7), dtype=torch.float32)
-    original_Ts_world_joint = torch.zeros((num_poses, 21, 7), dtype=torch.float32)
-    decoded_T_world_root = torch.zeros((num_poses, 7), dtype=torch.float32)
-    decoded_Ts_world_joint = torch.zeros((num_poses, 21, 7), dtype=torch.float32)
+    # Joints from the body pose alone: root at the origin, identity heading.
+    (
+        original_joints_global,
+        decoded_joints_global,
+        original_vertices,
+        decoded_vertices,
+    ) = decode_smplx_motion_geometry(
+        sample_dict,
+        max_frame_length,
+        include_vertices=return_joints,
+        to_cpu=False,
+    )
 
-    dummy_rot_quat = torch.tensor([1, 0, 0, 0], dtype=torch.float32)[None].expand(num_poses, -1)  # (num_poses, 4)
+    dummy_rot_quat = torch.tensor(
+        [1.0, 0.0, 0.0, 0.0], dtype=torch.float32, device=device
+    )[None].expand(num_poses, -1)  # (N, 4)
 
-    dummy_root_orient = torch.zeros((num_poses, 3), dtype=torch.float32).cuda()
-    dummy_trans = torch.zeros((num_poses, 3), dtype=torch.float32).cuda()
-    dummy_betas = torch.zeros((num_poses, 10), dtype=torch.float32).cuda()
+    def _world_transforms(joints):
+        T_world_root = torch.cat([dummy_rot_quat, joints[:, 0, :]], dim=-1)  # (N, 7)
+        Ts_world_joint = torch.cat(
+            [dummy_rot_quat.unsqueeze(1).expand(-1, 21, -1), joints[:, 1:22, :]], dim=-1
+        )  # (N, 21, 7)
+        return T_world_root, Ts_world_joint
 
-    with torch.no_grad():
-        # original
-        smplex_original_output = smplx_model(
-            pose_body=torch.from_numpy(original_pose_aa).float().cuda().reshape(-1, 63), 
-            root_orient=dummy_root_orient,
-            trans=dummy_trans,
-            betas=dummy_betas
-        )
-
-        original_joints_global = smplex_original_output.Jtr.cpu()
-        original_joints_global = original_joints_global[:, :22, :3]   # (chunk_size, 22, 3)
-
-        original_vertices = smplex_original_output.v.cpu()
-
-        original_T_world_root = torch.cat([
-            dummy_rot_quat, 
-            original_joints_global[:, 0, :]
-        ], dim=-1)  # (chunk_size, 7)
-        original_Ts_world_joint = torch.cat([
-            dummy_rot_quat.unsqueeze(1).expand(-1, 21, -1), 
-            original_joints_global[:, 1:22, :]
-        ], dim=-1)  # (chunk_size, 21, 7)
-
-        # decoded
-        smplex_decoded_output = smplx_model(
-            pose_body=torch.from_numpy(decoded_pose_aa).float().cuda().reshape(-1, 63), 
-            root_orient=dummy_root_orient,
-            trans=dummy_trans,
-            betas=dummy_betas
-        )
-
-        decoded_joints_global = smplex_decoded_output.Jtr.cpu()
-        decoded_joints_global = decoded_joints_global[:, :22, :3]
-
-        decoded_vertices = smplex_decoded_output.v.cpu()
-
-        decoded_T_world_root = torch.cat([
-            dummy_rot_quat, 
-            decoded_joints_global[:, 0, :]
-        ], dim=-1)
-        decoded_Ts_world_joint = torch.cat([
-            dummy_rot_quat.unsqueeze(1).expand(-1, 21, -1), 
-            decoded_joints_global[:, 1:22, :]
-        ], dim=-1)
+    original_T_world_root, original_Ts_world_joint = _world_transforms(original_joints_global)
+    decoded_T_world_root, decoded_Ts_world_joint = _world_transforms(decoded_joints_global)
 
     mpjpe = mpjpe_error(
         original_T_world_root, original_Ts_world_joint,
@@ -219,6 +271,13 @@ def compute_mpjpe(sample_dict, return_joints=False, max_frame_length=None):
     ).mean().item()  # already in mm
 
     if return_joints:
-        return mpjpe, original_joints_global, decoded_joints_global, original_vertices, decoded_vertices
+        # The seam / visualization tools consume host tensors, vertices included.
+        return (
+            mpjpe,
+            original_joints_global.cpu(),
+            decoded_joints_global.cpu(),
+            original_vertices.cpu(),
+            decoded_vertices.cpu(),
+        )
 
     return mpjpe, ori_error, orient_error, transl_error

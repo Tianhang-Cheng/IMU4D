@@ -1,0 +1,19 @@
+base_config: showo_finetune_imuposer.yaml
+
+experiment:
+    name: showo_finetune_dipimu
+    output_dir: "${oc.env:FULL_DIR,exp/showo_finetune_dipimu}"
+    train_selected_dataset: dipimu
+    eval_selected_dataset: dipimu
+    min_train_imu_len: 24
+    max_train_imu_len: 480
+    full_eval_frames: [60, 480]
+    full_eval_min_clip_frames: 1
+    full_eval_datasets:
+        - {name: dipimu, source: dipimu, root: "${oc.env:DIPIMU_ROOT,data/processed/dipimu/v2}", sample_num: null, contiguous_windows: true, contiguous_window_min_frames: 24}
+
+dataset:
+    params:
+        imu_path_or_url: "${oc.env:DIPIMU_ROOT,data/processed/dipimu/v2}"
+        train_imu_paths_or_urls:
+            - "${oc.env:DIPIMU_ROOT,data/processed/dipimu/v2}"
