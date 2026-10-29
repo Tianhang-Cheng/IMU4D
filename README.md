@@ -1,10 +1,10 @@
 # IMU4D: 4D Human-Object Understanding from Wearable IMUs
 
 <p align="center">
-  <a href="https://tianhang-cheng.github.io/IMU4D/"><img src="https://img.shields.io/badge/Website-1f2937?style=flat-square&logo=googlechrome&logoColor=white" alt="Project website"></a>
-  <a href="https://arxiv.org/abs/2604.21926"><img src="https://img.shields.io/badge/Paper-1f2937?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
-  <a href="https://huggingface.co/TianhangCheng7/IMU4d"><img src="https://img.shields.io/badge/Model-1f2937?style=flat-square&logo=huggingface&logoColor=white" alt="Model weights"></a>
-  <a href="https://huggingface.co/datasets/TianhangCheng7/IMU4DData"><img src="https://img.shields.io/badge/Dataset-1f2937?style=flat-square&logo=huggingface&logoColor=white" alt="Processed data"></a>
+  <a href="https://tianhang-cheng.github.io/IMU4D/"><img src="https://img.shields.io/badge/Project-Website-167b6d?style=flat-square&logo=googlechrome&logoColor=white" alt="Project website"></a>
+  <a href="https://arxiv.org/abs/2604.21926"><img src="https://img.shields.io/badge/arXiv-2604.21926-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
+  <a href="https://huggingface.co/TianhangCheng7/IMU4d"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model-Weights-ffb000?style=flat-square" alt="Model weights"></a>
+  <a href="https://huggingface.co/datasets/TianhangCheng7/IMU4DData"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-Processed%20Data-ff8c00?style=flat-square" alt="Processed data"></a>
 </p>
 
 This repository contains the IMU4D inference and training code. It predicts
