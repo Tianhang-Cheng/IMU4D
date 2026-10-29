@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
   <link rel="stylesheet" href="./static/css/model-comparison.css?v=20260925m">
+  <link rel="stylesheet" href="./static/css/site.css?v=20261029b">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script defer src="./static/js/fontawesome.all.min.js"></script>
@@ -42,35 +43,66 @@
 <body>
 
 
-  <section class="hero">
+  <section class="hero site-hero">
     <div class="hero-body">
       <div class="container is-max-widescreen">
-        <div class="columns is-centered">
-          <div class="column has-text-centered">
-            <h1 class="title is-1 publication-title">IMU4D: 4D Human-Object Understanding from Wearable IMUs</h1>
-            <div class="publication-links">
-              <span class="link-block">
-                <a href="https://github.com/Tianhang-Cheng/IMU4D" class="external-link button is-normal is-rounded is-dark" target="_blank" rel="noopener noreferrer">
-                  <span class="icon"><i class="fab fa-github"></i></span>
-                  <span>Code</span>
-                </a>
-              </span>
-            </div>
+        <div class="has-text-centered">
+          <p class="site-venue">arXiv 2026</p>
+          <h1 class="title is-1 publication-title">
+            <span class="site-brand">IMU4D</span>
+            <span class="site-title-rest">4D Human-Object Understanding from Wearable IMUs</span>
+          </h1>
+          <div class="publication-authors site-authors">
+            <span class="author-block"><a target="_blank" href="https://haoyuhsu.github.io/">Hao-Yu Hsu</a><sup>*</sup></span>
+            <span class="author-block"><a target="_blank" href="https://tianhang-cheng.github.io/">Tianhang Cheng</a><sup>*</sup></span>
+            <span class="author-block"><a target="_blank" href="https://wenj.github.io/">Jing Wen</a></span>
+            <span class="author-block"><a target="_blank" href="https://www.alexander-schwing.de/">Alexander G. Schwing</a></span>
+            <span class="author-block"><a target="_blank" href="https://shenlong.web.illinois.edu/">Shenlong Wang</a></span>
+          </div>
+          <p class="site-affiliation">
+            University of Illinois Urbana-Champaign
+            <span class="site-note"><sup>*</sup>Equal contribution</span>
+          </p>
+          <div class="publication-links site-links">
+            <a href="https://arxiv.org/abs/2604.21926" class="site-btn" target="_blank" rel="noopener noreferrer">
+              <i class="ai ai-arxiv"></i><span>arXiv</span>
+            </a>
+            <a href="https://github.com/Tianhang-Cheng/IMU4D" class="site-btn" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-github"></i><span>Code</span>
+            </a>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="hero teaser">
+  <section class="site-teaser">
     <div class="container is-max-widescreen">
-      <div class="hero-body">
-        <img src="./static/images/new_teasor.png" alt="IMU4D teaser: IMU time series from earbuds, watch and smartphone are turned into 4D human-object recovery (SMPL-X motion, text description, 3D objects)" style="width: 100%; height: auto; display: block; margin: 0 auto 1.5rem;">
-        <h2 class="subtitle has-text-centered">
-          We propose <strong>IMU4D</strong>, a unified multimodal model that jointly predicts <strong>human motion</strong>, 
-        <strong>activity descriptions</strong>, and the <strong>3D objects the person interacts with</strong> purely from <strong>wearable IMU signals</strong>.
-        </h2>
+      <div class="site-video-frame" id="overview-video">
+        <video id="teaser-video" playsinline preload="metadata" poster="./static/videos/teaser/poster.jpg">
+          <source src="./static/videos/teaser/teaser_1080p.mp4" type="video/mp4">
+        </video>
+        <button class="site-video-play" type="button" aria-label="Play overview video">
+          <span class="site-video-play-icon"><i class="fas fa-play"></i></span>
+          <span class="site-video-play-label">Watch the overview &middot; 1:34 &middot; with sound</span>
+        </button>
       </div>
+
+    </div>
+  </section>
+
+  <section class="section section-alt site-overview">
+    <div class="container is-max-widescreen">
+      <h2 class="title is-3 section-title has-text-centered">Overview</h2>
+      <p class="site-tldr">
+        <strong>IMU4D</strong> is a unified multimodal model that jointly predicts <strong>human motion</strong>,
+        <strong>activity descriptions</strong>, and the <strong>3D objects the person interacts with</strong>,
+        purely from <strong>wearable IMU signals</strong> in earbuds, a watch and a phone.
+      </p>
+
+      <figure class="site-figure">
+        <img src="./static/images/new_teasor.png" alt="IMU4D teaser: IMU time series from earbuds, watch and smartphone are turned into 4D human-object recovery (SMPL-X motion, text description, 3D objects)">
+      </figure>
     </div>
   </section>
 
@@ -82,7 +114,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Real-world IMU &rarr; Motion / Text</h2>
 
-      <hr>
 
       <template id="mc-sample-template">
         <article class="mc-card">
@@ -384,7 +415,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Synthetic IMU &rarr; Motion / Text</h2>
 
-      <hr>
 
       <div class="mc-root" id="model-comparison" data-datasets="humanml"
            data-dataset-names='{"humanml": "HumanML3D (5pt, head + both wrists + both pockets)"}'
@@ -542,7 +572,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Synthetic IMU &rarr; Motion / Text / Object</h2>
 
-      <hr>
 
       <div class="mc-root" id="scene-comparison" data-manifest="SCENE_MANIFEST" data-datasets="humoto,hiphi,omomo"
            data-dataset-names='{"humoto": "HUMOTO (static objects, 5pt, head + both wrists + both pockets)", "hiphi": "HiPHI (dynamic objects, 5pt, head + both wrists + both pockets)", "omomo": "OMOMO (dynamic objects, 5pt, head + both wrists + both pockets)"}'
@@ -578,7 +607,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Out-Of-Distribution Object Generation</h2>
 
-      <hr>
 
       <div class="mc-root" id="ood-object" data-manifest="OOD_OBJECT_MANIFEST"
            data-hide-group-title data-text-keys="ours">
@@ -613,7 +641,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Text Sampling Diversity</h2>
 
-      <hr>
 
       <div class="td-root" id="text-diversity">
         <div class="mc-heading">
@@ -695,7 +722,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Object Sampling Diversity</h2>
 
-      <hr>
 
       <div class="mc-root" id="scene-diversity" data-manifest="SCENE_SAMPLING_MANIFEST"
            data-dataset-names='{"humoto": "HUMOTO (static objects)", "omomo": "OMOMO (dynamic objects)", "hiphi": "HiPHI (dynamic objects)"}'
@@ -732,7 +758,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Text-Conditioned Object Editing</h2>
 
-      <hr>
 
       <div class="mc-root" id="swap-comparison" data-manifest="SWAP_MANIFEST"
            data-sample-picks='{"omomo": [1, 4], "hiphi": [1, 3]}'>
@@ -767,7 +792,6 @@
 
       <h2 class="title is-3 section-title has-text-centered">Other Applications</h2>
 
-      <hr>
 
       <h3 class="title is-4 subsection-title">Relocalization (IMU &rarr; Motion + Absolute Location)</h3>
       <div class="content has-text-justified" style="margin-bottom: 1.25rem;">
@@ -824,6 +848,21 @@
   <script src="./static/videos/scene_sampling/manifest.js?v=20260925c"></script>
   <script src="./static/videos/ood_object/manifest.js?v=20260926b"></script>
   <script src="./static/js/model-comparison.js?v=20260926a"></script>
+  <script>
+    (function () {
+      var frame = document.getElementById('overview-video');
+      if (!frame) return;
+      var video = frame.querySelector('video');
+      var button = frame.querySelector('.site-video-play');
+      function start() {
+        video.controls = true;
+        frame.classList.add('is-playing');
+        video.play();
+      }
+      button.addEventListener('click', start);
+      video.addEventListener('play', function () { frame.classList.add('is-playing'); video.controls = true; });
+    })();
+  </script>
 
 </body>
 </html>
