@@ -1,6 +1,11 @@
 # IMU4D: 4D Human-Object Understanding from Wearable IMUs
 
-[Paper](https://arxiv.org/abs/2604.21926) · [Project page](https://tianhang-cheng.github.io/IMU4D/) · [Model weights](https://huggingface.co/TianhangCheng7/IMU4d) · [Processed data](https://huggingface.co/datasets/TianhangCheng7/IMU4DData)
+<p align="center">
+  <a href="https://tianhang-cheng.github.io/IMU4D/"><img src="https://img.shields.io/badge/Website-1f2937?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Project website"></a>
+  <a href="https://arxiv.org/abs/2604.21926"><img src="https://img.shields.io/badge/Paper-1f2937?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv"></a>
+  <a href="https://huggingface.co/TianhangCheng7/IMU4d"><img src="https://img.shields.io/badge/Model-1f2937?style=for-the-badge&logo=huggingface&logoColor=white" alt="Model weights"></a>
+  <a href="https://huggingface.co/datasets/TianhangCheng7/IMU4DData"><img src="https://img.shields.io/badge/Dataset-1f2937?style=for-the-badge&logo=huggingface&logoColor=white" alt="Processed data"></a>
+</p>
 
 This repository contains the IMU4D inference and training code. It predicts
 SMPL-X motion and text from wearable IMU sequences; the scene models also
