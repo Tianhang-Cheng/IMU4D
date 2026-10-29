@@ -9,3 +9,5 @@
 *.safetensors
 /.pytest_cache/
 /.cache/
+*.egg-info/
+/motion_metrics/
